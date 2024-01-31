@@ -14,12 +14,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.datatype.jsr310.ser.ZoneIdSerializer;
 import com.google.common.collect.MultimapBuilder.ListMultimapBuilder;
 import com.google.common.collect.SetMultimap;
 
 import eu.solven.hutter_prize.HPUtils;
 import eu.solven.hutter_prize.IReversibleCompressor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 public class ColumnRepresentation implements IReversibleCompressor {
 
@@ -30,52 +32,26 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		List<String> strings = (List<String>) input;
 
 		String pages = strings.get(1);
-		String suffix = strings.get(2);
+		String footer = strings.get(2);
 
 		String PAGE_PREFIX = "\n  <page>";
 		int countPages = StringUtils.countOccurrencesOf(pages, PAGE_PREFIX);
 
 		SetMultimap<String, String> openerToCloser = makeOpenerToCloser();
 
-		Map<String, String> closerToColumn = new HashMap<>();
-		closerToColumn.put("</title>\n    <id>", "title");
-		closerToColumn.put("</id>\n    <revision>\n      <id>", "id");
-		closerToColumn.put("</id>\n      <timestamp>", "revision_id");
-		closerToColumn.put("</timestamp>\n      <contributor>\n        <username>", "revision_timestamp");
-		closerToColumn.put("</username>\n        <id>", "revision_username");
-		closerToColumn.put("</id>\n      </contributor>\n      <text xml:space=\"preserve\">#REDIRECT [[",
-				"revision_contributor_id");
-		closerToColumn.put("]]</text>\n    </revision>\n  </page>", "text");
-		closerToColumn.put("</timestamp>\n      <contributor>\n        <username>", "revision_timestamp");
-		closerToColumn.put("</id>\n      </contributor>\n      <minor />\n      <comment>", "revision_contributor_id");
-		closerToColumn.put("</comment>\n      <text xml:space=\"preserve\">", "comment");
-		closerToColumn.put("</text>\n    </revision>\n  </page>", "text");
+		Map<String, String> closerToColumn = closerToColumn();
 
 		Map<String, List<?>> keyToVector = new HashMap<>();
 
-		List<String> titles = Arrays.asList(new String[countPages]);
-		keyToVector.put("title", titles);
-
-		List<Integer> ids = new IntArrayList(new int[countPages]);
-		keyToVector.put("id", ids);
-
-		List<Integer> revision_id = new IntArrayList(new int[countPages]);
-		keyToVector.put("revision_id", ids);
-
-		List<String> revisionTs = Arrays.asList(new String[countPages]);
-		keyToVector.put("revision_timestamp", revisionTs);
-
-		List<String> revision_username = Arrays.asList(new String[countPages]);
-		keyToVector.put("revision_username", revision_username);
-
-		List<Integer> revision_contributor_id = new IntArrayList(new int[countPages]);
-		keyToVector.put("revision_contributor_id", revision_contributor_id);
-
-		List<String> comment = Arrays.asList(new String[countPages]);
-		keyToVector.put("comment", comment);
-
-		List<String> text = Arrays.asList(new String[countPages]);
-		keyToVector.put("text", text);
+		keyToVector.put("title", Arrays.asList(new String[countPages]));
+		keyToVector.put("id", new IntArrayList(new int[countPages]));
+		keyToVector.put("revision_id", new IntArrayList(new int[countPages]));
+		keyToVector.put("revision_timestamp", Arrays.asList(new String[countPages]));
+		keyToVector.put("revision_username", Arrays.asList(new String[countPages]));
+		keyToVector.put("ip", Arrays.asList(new String[countPages]));
+		keyToVector.put("revision_contributor_id", new IntArrayList(new int[countPages]));
+		keyToVector.put("comment", Arrays.asList(new String[countPages]));
+		keyToVector.put("text", Arrays.asList(new String[countPages]));
 
 		List<String> leftoverVector = Arrays.asList(new String[countPages]);
 		keyToVector.put("leftovers", leftoverVector);
@@ -91,12 +67,12 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 				int indexStartPage = pages.indexOf(PAGE_PREFIX, previousEndPage + 1);
 				if (indexStartPage < 0) {
-					suffix = pages.substring(previousEndPage + 1) + suffix;
+					footer = pages.substring(previousEndPage + 1) + footer;
 
 					break;
 				}
 				String PAGE_CLOSING = "  </page>";
-				int indexEndPage = pages.indexOf(PAGE_CLOSING, indexStartPage);
+				int indexEndPage = pages.indexOf(PAGE_CLOSING, indexStartPage + PAGE_PREFIX.length());
 				if (indexEndPage < 0) {
 					indexEndPage = pages.length();
 				} else {
@@ -114,7 +90,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 					String pageAfterPreviousValue = page.substring(previousValuePosition);
 
 					Optional<String> optColumnOpener = openerToCloser.keySet().stream().filter(prefix -> {
-						boolean startsWith = pageAfterPreviousValue.startsWith(prefix);
+						boolean startsWith = pageAfterPreviousValue.contains(prefix);
 
 						if (!startsWith) {
 							String candidate = pageAfterPreviousValue.substring(0,
@@ -125,18 +101,31 @@ public class ColumnRepresentation implements IReversibleCompressor {
 						}
 
 						return startsWith;
-					}).findFirst();
+					})
+							// Find the first appearing opener
+							.sorted(Comparator.comparing(opener -> pageAfterPreviousValue.indexOf(opener)))
+							.findFirst();
 
 					if (optColumnOpener.isEmpty()) {
-						leftoverVector.set(pageIndex, pageAfterPreviousValue);
+						// There is no opener
+						if (closerToColumn.containsKey(pageAfterPreviousValue)) {
+							// And the leftover is a closer
+							separators.add(pageAfterPreviousValue);
+						} else {
+							// But the leftover is unknown: we lack some structure detection
+							leftoverVector.set(pageIndex, pageAfterPreviousValue);
+						}
+
 						previousValuePosition += pageAfterPreviousValue.length();
 						break nextColumn;
 					}
 
-					String columnOpener = optColumnOpener.get();
+					String columnOpenerHint = optColumnOpener.get();
+					String columnOpener = pageAfterPreviousValue.substring(0,
+							pageAfterPreviousValue.indexOf(columnOpenerHint) + columnOpenerHint.length());
 					String pageAfterOpener = pageAfterPreviousValue.substring(columnOpener.length());
 
-					Set<String> optClosers = openerToCloser.get(columnOpener);
+					Set<String> optClosers = openerToCloser.get(columnOpenerHint);
 					Optional<String> optCloser = optClosers.stream()
 							.filter(closer -> pageAfterOpener.indexOf(closer) >= 0)
 							.min(Comparator.comparing(closer -> pageAfterOpener.indexOf(closer)));
@@ -150,20 +139,12 @@ public class ColumnRepresentation implements IReversibleCompressor {
 					}
 
 					separators.add(columnOpener);
+					previousValuePosition += columnOpener.length();
 
 					int closingIndex = pageAfterOpener.indexOf(optCloser.get());
 					String value = pageAfterOpener.substring(0, closingIndex);
 
-					String column = closerToColumn.entrySet()
-							.stream()
-							.filter(e -> optCloser.get().startsWith(e.getKey()))
-							.map(e -> e.getValue())
-							.findAny()
-							.orElse(null);
-					if (column == null) {
-						throw new IllegalStateException(
-								"We lack column for closer=`" + optCloser.get() + "` Page=" + page);
-					}
+					String column = getCloserToColumn(closerToColumn, page, optCloser.get());
 
 					List<?> vector = keyToVector.get(column);
 
@@ -181,42 +162,83 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 					// We move after the value and not after the opener, as we may have multiple opener for a single
 					// closer
-					previousValuePosition += columnOpener.length() + value.length();
+					previousValuePosition += value.length();
 				}
 
 				separators2.set(pageIndex, separators);
 				previousEndPage += previousValuePosition;
+
+				// if (previousEndPage != indexEndPage) {
+				// System.out.println();
+				// }
 			}
 
-			return Arrays.asList(strings.get(0), keyToVector, suffix);
+			return Arrays.asList(strings.get(0), keyToVector, footer);
 		} finally {
 			LOGGER.info("Done");
 		}
+	}
+
+	private String getCloserToColumn(Map<String, String> closerToColumn, String page, String closer) {
+		if (closer == null) {
+			throw new IllegalStateException("ouch");
+		}
+
+		String column = closerToColumn.entrySet()
+				.stream()
+				.filter(e -> closer.startsWith(e.getKey()))
+				.map(e -> e.getValue())
+				.findAny()
+				.orElse(null);
+		if (column == null) {
+			throw new IllegalStateException("We lack column for closer=`" + closer + "` Page=" + page);
+		}
+		return column;
+	}
+
+	private Map<String, String> closerToColumn() {
+		Map<String, String> closerToColumn = new HashMap<>();
+		closerToColumn.put("</title>", "title");
+		closerToColumn.put("</id>\n    <revision>", "id");
+		closerToColumn.put("</id>\n      <timestamp>", "revision_id");
+		closerToColumn.put("</timestamp>", "revision_timestamp");
+		closerToColumn.put("</username>", "revision_username");
+		closerToColumn.put("</id>\n      </contributor>", "revision_contributor_id");
+		closerToColumn.put("]]</text>\n    </revision>\n  </page>", "text");
+		closerToColumn.put("</timestamp>", "revision_timestamp");
+		closerToColumn.put("</comment>", "comment");
+		closerToColumn.put("</text>\n    </revision>\n  </page>", "text");
+		closerToColumn.put("</ip>", "ip");
+		return closerToColumn;
 	}
 
 	private SetMultimap<String, String> makeOpenerToCloser() {
 		// Linked in order to put first the most probably prefix
 		SetMultimap<String, String> openerToCloser = ListMultimapBuilder.linkedHashKeys().hashSetValues().build();
 
-		openerToCloser.put("\n  <page>\n    <title>", "</title>\n    <id>");
-		openerToCloser.put("</title>\n    <id>", "</id>\n    <revision>\n      <id>");
+		openerToCloser.put("\n  <page>\n    <title>", "</title>");
+		openerToCloser.put("</title>\n    <id>", "</id>\n    <revision>");
 		openerToCloser.put("</id>\n    <revision>\n      <id>", "</id>\n      <timestamp>");
-		openerToCloser.put("</id>\n      <timestamp>", "</timestamp>\n      <contributor>\n        <username>");
-		openerToCloser.put("</timestamp>\n      <contributor>\n        <username>", "</username>\n        <id>");
+		openerToCloser.put("</id>\n      <timestamp>", "</timestamp>");
+		openerToCloser.put("</timestamp>\n      <contributor>\n        <username>", "</username>");
 
 		// There is an optional `<minor /><comment>`
 		openerToCloser.put("</username>\n        <id>",
-				"</id>\n      </contributor>\n      <minor />\n      <comment>");
+				"</id>\n      </contributor>");
 
 		// There is redirects
 		openerToCloser.put("</username>\n        <id>",
-				"</id>\n      </contributor>\n      <text xml:space=\"preserve\">#REDIRECT [[");
+				"</id>\n      </contributor>");
 		openerToCloser.put("</id>\n      </contributor>\n      <text xml:space=\"preserve\">#REDIRECT [[",
 				"]]</text>\n    </revision>\n  </page>");
 
 		openerToCloser.put("</id>\n      </contributor>\n      <minor />\n      <comment>",
-				"</comment>\n      <text xml:space=\"preserve\">");
+				"</comment>");
 		openerToCloser.put("</comment>\n      <text xml:space=\"preserve\">", "</text>\n    </revision>\n  </page>");
+
+		openerToCloser.put("</timestamp>\n      <contributor>\n        <ip>", "</ip>");
+
+		openerToCloser.put("<comment>", "</comment>");
 
 		return openerToCloser;
 	}
@@ -230,8 +252,53 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asList.get(1);
 		String footer = (String) asList.get(2);
 
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder();
+
+		Map<String, String> closerToColumn = closerToColumn();
+
+		List<String> leftovers = (List<String>) keyToVector.get("leftovers");
+		List<List<String>> separators2 = (List<List<String>>) keyToVector.get("separators");
+
+		for (int i = 0; i < keyToVector.get("id").size(); i++) {
+			List<String> separators = separators2.get(i);
+
+			for (int iSep = 0; iSep < separators.size(); iSep++) {
+				String sep = separators.get(iSep);
+
+				if (iSep >= 1) {
+					String columnname = getCloserToColumn(closerToColumn, "", sep);
+
+					List<?> column = keyToVector.get(columnname);
+					if (column instanceof IntList) {
+						sb.append(((IntList) column).getInt(i));
+					} else {
+						// We expect to receive only String
+						sb.append(column.get(i).toString());
+					}
+				}
+
+				sb.append(sep);
+			}
+
+			String leftOver = leftovers.get(i);
+			if (leftOver != null) {
+				{
+
+					String columnname = getCloserToColumn(closerToColumn, "", leftOver);
+
+					List<?> column = keyToVector.get(columnname);
+					if (column instanceof IntList) {
+						sb.append(((IntList) column).getInt(i));
+					} else {
+						// We expect to receive only String
+						sb.append(column.get(i).toString());
+					}
+				}
+				sb.append(leftOver);
+			}
+		}
+
+		return Arrays.asList(header, sb.toString(), footer);
 	}
 
 }

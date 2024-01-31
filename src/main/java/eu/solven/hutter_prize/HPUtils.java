@@ -2,6 +2,7 @@ package eu.solven.hutter_prize;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+
+import eu.solven.pepper.logging.PepperLogHelper;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 public class HPUtils {
 
@@ -22,33 +26,72 @@ public class HPUtils {
 		if (resource instanceof FileSystemResource) {
 			FileSystemResource fileResource = (FileSystemResource) resource;
 			try {
-				return fileResource.getURI() + "=" + Files.size(fileResource.getFile().toPath());
+				return fileResource.getURI() + "="
+						+ PepperLogHelper.humanBytes(Files.size(fileResource.getFile().toPath()));
 			} catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
 		} else if (resource instanceof byte[]) {
-			return "byte[].length=" + ((byte[]) resource).length;
+			return "byte[].length=" + PepperLogHelper.humanBytes(size(resource));
 		} else if (resource instanceof char[]) {
-			return "char[].length=" + ((char[]) resource).length;
+			return "char[].length=" + PepperLogHelper.humanBytes(size(resource));
 		} else if (resource instanceof String) {
 			String string = (String) resource;
-			return "String.length()=" + string.length() + " " + nameAndSize(string.toCharArray());
+			return "String.length()=" + string.length() + " " + PepperLogHelper.humanBytes(size(resource));
 		} else if (resource instanceof List<?>) {
 			List<?> list = (List<?>) resource;
-			return "List.size()=" + list.size()
-					+ " "
-					+ list.stream().map(o -> nameAndSize(o)).limit(10).collect(Collectors.joining(" "));
+
+			if (list.stream().anyMatch(Map.class::isInstance)) {
+				// This is a small List with structured data
+				return "List.size()=" + list.size()
+						+ " "
+						+ list.stream().map(o -> nameAndSize(o)).collect(Collectors.joining(" "));
+			} else {
+				// this is a large List with raw data into
+				return "List.size()=" + list.size() + " byte=" + PepperLogHelper.humanBytes(size(resource));
+			}
+
 		} else if (resource instanceof Map<?, ?>) {
 			Map<?, ?> string = (Map<?, ?>) resource;
 			return "Map.length()=" + string.size()
 					+ " "
 					+ string.entrySet()
 							.stream()
-							.limit(10)
-							.map(e -> e.getKey() + " -> " + nameAndSize(e.getValue()))
+							.map(e -> e.getKey() + " -> " + PepperLogHelper.humanBytes(size(e.getValue())))
 							.collect(Collectors.joining(" "));
 		} else {
 			return String.valueOf(resource);
+		}
+	}
+
+	public static long size(Object resource) {
+		if (resource instanceof FileSystemResource) {
+			FileSystemResource fileResource = (FileSystemResource) resource;
+			try {
+				return Files.size(fileResource.getFile().toPath());
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		} else if (resource instanceof byte[]) {
+			return ((byte[]) resource).length;
+		} else if (resource instanceof char[]) {
+			return 4 * ((char[]) resource).length;
+		} else if (resource instanceof String) {
+			String string = (String) resource;
+			return string.length() + size(string.getBytes(StandardCharsets.UTF_8));
+		} else if (resource instanceof IntList) {
+			List<?> list = (List<?>) resource;
+			return 4 * list.size();
+		} else if (resource instanceof List<?>) {
+			List<?> list = (List<?>) resource;
+			return 8 * list.size() + list.stream().mapToLong(o -> size(o)).sum();
+		} else if (resource instanceof Map<?, ?>) {
+			Map<?, ?> string = (Map<?, ?>) resource;
+			return 8 * string.size() + string.entrySet().stream().mapToLong(e -> size(e.getValue())).sum();
+		} else if (resource == null) {
+			return 0;
+		} else {
+			return Long.MAX_VALUE;
 		}
 	}
 

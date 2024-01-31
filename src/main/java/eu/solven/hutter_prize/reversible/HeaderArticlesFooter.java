@@ -21,7 +21,8 @@ public class HeaderArticlesFooter implements IReversibleCompressor {
 
 		LOGGER.info("{}{}{}", "Head of content:", System.lineSeparator(), string.substring(0, 2 * 1024));
 
-		int indexOfHeaderEnd = string.indexOf("</siteinfo>");
+		String HEADER_FOOTER = "</siteinfo>";
+		int indexOfHeaderEnd = string.indexOf(HEADER_FOOTER) + HEADER_FOOTER.length();
 
 		return Arrays.asList(string.substring(0, indexOfHeaderEnd), string.substring(indexOfHeaderEnd), "");
 	}
@@ -30,7 +31,7 @@ public class HeaderArticlesFooter implements IReversibleCompressor {
 	public Object decompress(Object output) throws IOException {
 		List<String> asStrings = (List<String>) output;
 
-		return asStrings.stream().collect(Collectors.joining());
+		return asStrings.stream().collect(Collectors.joining()).getBytes(StandardCharsets.UTF_8);
 	}
 
 }

@@ -68,6 +68,19 @@
     <version>8.5.12</version>
 </dependency>
 
+         <dependency>
+	     <groupId>me.lemire.integercompression</groupId>
+	     <artifactId>JavaFastPFOR</artifactId>
+	     <version>0.1.12</version>
+         </dependency>
+         
+         <!-- https://mvnrepository.com/artifact/io.github.solven-eu.pepper/pepper -->
+<dependency>
+    <groupId>io.github.solven-eu.pepper</groupId>
+    <artifactId>pepper</artifactId>
+    <version>4.5</version>
+</dependency>
+
 
     </dependencies>
 
