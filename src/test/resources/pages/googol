@@ -1,0 +1,86 @@
+{{wiktionarypar|googol}}
+ 
+:''This article is about the large number. For the Internet company, see [[Google]]. For the author, see [[Gogol]].''
+
+A '''googol''' is the [[large number|large]] [[number]] 10&lt;sup&gt;100&lt;/sup&gt;, that is, the [[numerical digit|digit]] 1 followed by one hundred [[0 (number)|zero]]s. The term was coined in [[1938]] by nine-year-old [[Milton Sirotta]], nephew of [[United States|American]] [[mathematician]] [[Edward Kasner]].  Kasner popularized the concept in his book ''Mathematics and the Imagination''.
+
+A googol is approximately equal to the [[factorial]] of 70, and its only [[prime factor]]s are 2 and 5. In [[binary numeral system|binary]] it would take up 333 [[bit]]s.
+
+The googol is of no particular significance in [[mathematics]], nor does it have any practical uses. Kasner created it to illustrate the difference between an unimaginably large number and [[infinity]], and in this role it is sometimes used in teaching mathematics.
+
+==Writing out a googol==
+
+A googol can be written in conventional notation, as follows:
+
+:&lt;small&gt;1 googol = 10&lt;sup&gt;100&lt;/sup&gt; = 
+&lt;small&gt;10 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000 000&lt;/small&gt;
+
+==Relation to ''-illion'' number names==
+
+Using the [[long and short scales|short scale]], a googol is equal to ten [[duotrigintillion]]. Using the [[long and short scales|long scale]], it is equal to ten thousand [[sexdecillion]] (or sedecillion), or ten sexdecilliard/sedecilliard.
+
+==The shrinking googol==
+
+Back when it was named in 1938, the googol was undeniably large. However, with the invention of fast computers and fast [[algorithm]]s, computation with numbers the size of a googol has become routine. For example, even the difficult problem of [[prime factorization]] is now fairly accessible for 100 digit numbers.
+
+The largest number that can be represented by a typical pocket calculator for high school or scientific use is slightly less than a googol (e.g. 9.9999999 E+99, i.e. 9.9999999&lt;math&gt;\times&lt;/math&gt;10&lt;sup&gt;99&lt;/sup&gt;, or 0.99999999 googol). However, some models allow exponents larger than 99. (Note that since often these numbers are stored as [[floating point]] numbers, only an approximation of the actual number is stored and not the entire number.)
+
+==Trivia==
+
+*''Googol'' was the answer to the million-[[Pound Sterling|pound]] question on [[Who Wants To Be A Millionaire|''Who Wants to Be a Millionaire'']] when [[Charles Ingram|Major Charles Ingram]] attempted to defraud the quiz show on [[10 September]] [[2001]].
+
+*If you drew a [[regular polygon]] with a googol sides that was 10&lt;sup&gt;27&lt;/sup&gt; times the size of the known [[universe]], it would still appear circular, even on the scale of a [[Planck length]].
+
+*A googol is greater than the number of particles in the [[known universe]], which has been variously estimated from 10&lt;sup&gt;72&lt;/sup&gt; up to 10&lt;sup&gt;87&lt;/sup&gt;.
+
+*[[Black hole]]s are presumed to evaporate because they faintly give off [[Hawking radiation]]; if so, a [[Supermassive_black_hole|supermassive black hole]] would take ''roughly'' a googol years to evaporate. [http://www.pbs.org/wnet/hawking/programs/html/prog-content_4-4.html]
+
+*A googol is considerably ''less'' than the number described in the ancient Greek story of [[The Sand Reckoner]], namely &lt;math&gt;10^{8 \times 10^{16}}&lt;/math&gt;.
+
+*A ''little googol'' is 2&lt;sup&gt;100&lt;/sup&gt; &amp;#8776; 1.267x10&lt;sup&gt;30&lt;/sup&gt; and a ''little googolplex'' is &lt;math&gt;2^{2^{100}} \approx 10^{3.8 \times 10^{29}}&lt;/math&gt;.
+
+*The Internet [[search engine]] [[Google]] was named after this number. The original founders were going for 'Googol', but ended up with 'Google' due to a spelling mistake. [[Lawrence E. Page]]: &quot;[[Lucas Pereira]]: 'You idiots, you spelled &quot;Googol&quot; wrong!' But this was good, because google.com was available and googol.com was not. Now most people spell 'Googol' 'Google', so it worked out OK in the end.&quot;
+
+==Googolplex ==
+
+A [[googolplex]] is 1 followed by a googol of zeroes, or ten raised to the power of a googol: &lt;math&gt;{10}^\mbox{googol}&lt;/math&gt; = &lt;math&gt;{10}^{{10}^{100}}&lt;/math&gt;.
+
+==See also==
+*[[Googolplex]]
+*[[Googlit]]
+*[[Large number]]
+*[[Names of large numbers]]
+
+== References ==
+*Kasner, Edward &amp; Newman, James Roy ''Mathematics and the Imagination'' (London: Penguin, [[1940]]; New York: Simon and Schuster, [[1967]]; Dover Pubns, April [[2001]], ISBN 0486417034).
+*[http://afr.com/articles/2004/06/18/1087245103935.html 'Searching for the birth of the googol']
+*[http://alan.blog-city.com/read/1003011.htm 'An evening with Googles Marissa Mayer']
+*[http://www.j-bradford-delong.net/movable_type/2003_archives/000032.html 'Google and Larry Page']
+*[http://www.googol.com/ googol.com]
+*&quot;There Could Be No Google Without Edward Kasner&quot;, Carl Bialik, ''The Wall Street Journal Online'', June 14, 2004.
+==External link==
+* [http://www.google.com/corporate/history.html History from the Google website]
+
+[[Category:Large numbers]]
+
+[[bg:Гугол]]
+[[br:Gogol]]
+[[da:Googol]]
+[[de:Googol]]
+[[es:Googol]]
+[[eo:Guglo]]
+[[fr:Gogol]]
+[[ko:구골]]
+[[it:Googol]]
+[[he:גוגול]]
+[[hu:Googol]]
+[[nl:Googol]]
+[[ja:グーゴル]]
+[[nb:Googol]]
+[[pl:Googol]]
+[[pt:Googol]]
+[[ru:Гугол]]
+[[sl:Gugol]]
+[[fi:Googol]]
+[[sv:Googol]]
+[[zh:Googol]]

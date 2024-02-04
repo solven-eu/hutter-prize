@@ -42,10 +42,10 @@ public class CompositeReversibleCompressor implements IReversibleCompressor {
 		for (IReversibleCompressor compressor : Lists.reverse(compressors)) {
 			Object newInput = compressor.decompress(input);
 
-			LOGGER.info("{} uncompressed {} into {}",
+			LOGGER.info("{} uncompressed {} from {}",
 					compressor.getClass().getSimpleName(),
-					HPUtils.nameAndSize(input),
-					HPUtils.nameAndSize(newInput));
+					HPUtils.nameAndSize(newInput),
+					HPUtils.nameAndSize(input));
 
 			input = newInput;
 		}

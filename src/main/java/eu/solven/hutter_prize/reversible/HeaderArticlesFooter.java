@@ -2,12 +2,14 @@ package eu.solven.hutter_prize.reversible;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
 
@@ -24,14 +26,23 @@ public class HeaderArticlesFooter implements IReversibleCompressor {
 		String HEADER_FOOTER = "</siteinfo>";
 		int indexOfHeaderEnd = string.indexOf(HEADER_FOOTER) + HEADER_FOOTER.length();
 
-		return Arrays.asList(string.substring(0, indexOfHeaderEnd), string.substring(indexOfHeaderEnd), "");
+		return ImmutableMap.builder()
+				.put("header", string.substring(0, indexOfHeaderEnd))
+				.put("body", string.substring(indexOfHeaderEnd))
+				.put("footer", "")
+				.build();
 	}
 
 	@Override
 	public Object decompress(Object output) throws IOException {
-		List<String> asStrings = (List<String>) output;
+		Map<String, ?> asStrings = (Map<String, ?>) output;
 
-		return asStrings.stream().collect(Collectors.joining()).getBytes(StandardCharsets.UTF_8);
+		String asString = Stream.of("header", "body", "footer")
+				.map(k -> (String) asStrings.get(k))
+				.filter(s -> null != s)
+				.collect(Collectors.joining());
+
+		return asString.getBytes(StandardCharsets.UTF_8);
 	}
 
 }

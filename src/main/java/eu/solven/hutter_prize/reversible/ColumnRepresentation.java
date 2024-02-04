@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import com.fasterxml.jackson.datatype.jsr310.ser.ZoneIdSerializer;
 import com.google.common.collect.MultimapBuilder.ListMultimapBuilder;
 import com.google.common.collect.SetMultimap;
 
@@ -27,12 +27,56 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ColumnRepresentation.class);
 
+	private Map<String, String> closerToColumn() {
+		Map<String, String> closerToColumn = new HashMap<>();
+		closerToColumn.put("</title>", "title");
+		closerToColumn.put("</id>\n    <revision>", "id");
+		closerToColumn.put("</id>\n    <restrictions>", "id");
+		closerToColumn.put("</id>\n      <timestamp>", "revision_id");
+		closerToColumn.put("</timestamp>", "revision_timestamp");
+		closerToColumn.put("</username>", "revision_username");
+		closerToColumn.put("</id>\n      </contributor>", "revision_contributor_id");
+		closerToColumn.put("]]</text>\n    </revision>\n  </page>", "text");
+		closerToColumn.put("</timestamp>", "revision_timestamp");
+		closerToColumn.put("</restrictions>", "revision_restriction");
+		closerToColumn.put("</comment>", "comment");
+		closerToColumn.put("</text>\n    </revision>\n  </page>", "text");
+		closerToColumn.put("</ip>", "ip");
+		return closerToColumn;
+	}
+
+	private SetMultimap<String, String> makeOpenerToCloser() {
+		// Linked in order to put first the most probably prefix
+		SetMultimap<String, String> openerToCloser = ListMultimapBuilder.linkedHashKeys().hashSetValues().build();
+
+		openerToCloser.put("\n  <page>\n    <title>", "</title>");
+		openerToCloser.put("</title>\n    <id>", "</id>\n    <revision>");
+		openerToCloser.put("</title>\n    <id>", "</id>\n    <restrictions>");
+		openerToCloser.put("</id>\n    <revision>\n      <id>", "</id>\n      <timestamp>");
+		openerToCloser.put("</id>\n      <timestamp>", "</timestamp>");
+		openerToCloser.put("</timestamp>\n      <contributor>\n        <username>", "</username>");
+
+		openerToCloser.put("</username>\n        <id>", "</id>\n      </contributor>");
+
+		openerToCloser.put("<restrictions>", "</restrictions>");
+
+		openerToCloser.put("<comment>", "</comment>");
+		openerToCloser.put("<text xml:space=\"preserve\">", "</text>\n    </revision>\n  </page>");
+		openerToCloser.put("<text xml:space=\"preserve\">#REDIRECT [[", "]]</text>\n    </revision>\n  </page>");
+
+		openerToCloser.put("<ip>", "</ip>");
+
+		openerToCloser.put("<comment>", "</comment>");
+
+		return openerToCloser;
+	}
+
 	@Override
 	public Object compress(Object input) throws IOException {
-		List<String> strings = (List<String>) input;
+		Map<String, ?> asMap = (Map<String, ?>) input;
 
-		String pages = strings.get(1);
-		String footer = strings.get(2);
+		String pages = (String) asMap.get("body");
+		String footer = (String) asMap.get("footer");
 
 		String PAGE_PREFIX = "\n  <page>";
 		int countPages = StringUtils.countOccurrencesOf(pages, PAGE_PREFIX);
@@ -50,6 +94,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		keyToVector.put("revision_username", Arrays.asList(new String[countPages]));
 		keyToVector.put("ip", Arrays.asList(new String[countPages]));
 		keyToVector.put("revision_contributor_id", new IntArrayList(new int[countPages]));
+		keyToVector.put("revision_restriction", Arrays.asList(new String[countPages]));
 		keyToVector.put("comment", Arrays.asList(new String[countPages]));
 		keyToVector.put("text", Arrays.asList(new String[countPages]));
 
@@ -112,6 +157,10 @@ public class ColumnRepresentation implements IReversibleCompressor {
 							// And the leftover is a closer
 							separators.add(pageAfterPreviousValue);
 						} else {
+							if (pageAfterPreviousValue.length() >= 100) {
+								System.out.println();
+							}
+
 							// But the leftover is unknown: we lack some structure detection
 							leftoverVector.set(pageIndex, pageAfterPreviousValue);
 						}
@@ -173,7 +222,17 @@ public class ColumnRepresentation implements IReversibleCompressor {
 				// }
 			}
 
-			return Arrays.asList(strings.get(0), keyToVector, footer);
+			// Make sure we let transit other information in other fields
+			Map<String, Object> output = new LinkedHashMap<>(asMap);
+
+			// We preprocessed `body` into `keyToVector`
+			output.remove("body");
+			output.put("keyToVector", keyToVector);
+
+			// Write an updated footer
+			output.put("footer", footer);
+
+			return output;
 		} finally {
 			LOGGER.info("Done");
 		}
@@ -196,61 +255,13 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		return column;
 	}
 
-	private Map<String, String> closerToColumn() {
-		Map<String, String> closerToColumn = new HashMap<>();
-		closerToColumn.put("</title>", "title");
-		closerToColumn.put("</id>\n    <revision>", "id");
-		closerToColumn.put("</id>\n      <timestamp>", "revision_id");
-		closerToColumn.put("</timestamp>", "revision_timestamp");
-		closerToColumn.put("</username>", "revision_username");
-		closerToColumn.put("</id>\n      </contributor>", "revision_contributor_id");
-		closerToColumn.put("]]</text>\n    </revision>\n  </page>", "text");
-		closerToColumn.put("</timestamp>", "revision_timestamp");
-		closerToColumn.put("</comment>", "comment");
-		closerToColumn.put("</text>\n    </revision>\n  </page>", "text");
-		closerToColumn.put("</ip>", "ip");
-		return closerToColumn;
-	}
-
-	private SetMultimap<String, String> makeOpenerToCloser() {
-		// Linked in order to put first the most probably prefix
-		SetMultimap<String, String> openerToCloser = ListMultimapBuilder.linkedHashKeys().hashSetValues().build();
-
-		openerToCloser.put("\n  <page>\n    <title>", "</title>");
-		openerToCloser.put("</title>\n    <id>", "</id>\n    <revision>");
-		openerToCloser.put("</id>\n    <revision>\n      <id>", "</id>\n      <timestamp>");
-		openerToCloser.put("</id>\n      <timestamp>", "</timestamp>");
-		openerToCloser.put("</timestamp>\n      <contributor>\n        <username>", "</username>");
-
-		// There is an optional `<minor /><comment>`
-		openerToCloser.put("</username>\n        <id>",
-				"</id>\n      </contributor>");
-
-		// There is redirects
-		openerToCloser.put("</username>\n        <id>",
-				"</id>\n      </contributor>");
-		openerToCloser.put("</id>\n      </contributor>\n      <text xml:space=\"preserve\">#REDIRECT [[",
-				"]]</text>\n    </revision>\n  </page>");
-
-		openerToCloser.put("</id>\n      </contributor>\n      <minor />\n      <comment>",
-				"</comment>");
-		openerToCloser.put("</comment>\n      <text xml:space=\"preserve\">", "</text>\n    </revision>\n  </page>");
-
-		openerToCloser.put("</timestamp>\n      <contributor>\n        <ip>", "</ip>");
-
-		openerToCloser.put("<comment>", "</comment>");
-
-		return openerToCloser;
-	}
-
 	@Override
 	public Object decompress(Object output) throws IOException {
-		List<?> asList = (List<?>) output;
+		Map<String, ?> asMap = (Map<String, ?>) output;
 
-		String header = (String) asList.get(0);
+		String footer = (String) asMap.get("footer");
 
-		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asList.get(1);
-		String footer = (String) asList.get(2);
+		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asMap.get("keyToVector");
 
 		StringBuilder sb = new StringBuilder();
 
@@ -298,7 +309,17 @@ public class ColumnRepresentation implements IReversibleCompressor {
 			}
 		}
 
-		return Arrays.asList(header, sb.toString(), footer);
+		// Make sure we let transit other information in other fields
+		Map<String, Object> input = new LinkedHashMap<>(asMap);
+
+		// We preprocessed `body` into `keyToVector`
+		input.remove("keyToVector");
+		input.put("body", sb.toString());
+
+		// Write an updated footer
+		input.put("footer", footer);
+
+		return input;
 	}
 
 }

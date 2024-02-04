@@ -1,7 +1,6 @@
 package eu.solven.hutter_prize.reversible;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,12 +18,9 @@ public class CompressColumns implements IReversibleCompressor {
 
 	@Override
 	public Object compress(Object input) throws IOException {
-		List<?> asList = (List<?>) input;
+		Map<String, ?> asMap = (Map<String, ?>) input;
 
-		String header = (String) asList.get(0);
-
-		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asList.get(1);
-		String footer = (String) asList.get(2);
+		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asMap.get("keyToVector");
 
 		IntCompressor iic = new IntCompressor();
 
@@ -42,17 +38,20 @@ public class CompressColumns implements IReversibleCompressor {
 			}
 		});
 
-		return Arrays.asList(header, compressedKeyToVector, footer);
+		// Make sure we let transit other information in other fields
+		Map<String, Object> output = new LinkedHashMap<>(asMap);
+
+		// Write an updated keyToVector
+		output.put("keyToVector", compressedKeyToVector);
+
+		return output;
 	}
 
 	@Override
 	public Object decompress(Object output) throws IOException {
-		List<?> asList = (List<?>) output;
+		Map<String, ?> asMap = (Map<String, ?>) output;
 
-		String header = (String) asList.get(0);
-
-		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asList.get(1);
-		String footer = (String) asList.get(2);
+		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asMap.get("keyToVector");
 
 		IntCompressor iic = new IntCompressor();
 
@@ -69,7 +68,13 @@ public class CompressColumns implements IReversibleCompressor {
 			}
 		});
 
-		return Arrays.asList(header, decompressedKeyToVector, footer);
+		// Make sure we let transit other information in other fields
+		Map<String, Object> input = new LinkedHashMap<>(asMap);
+
+		// Write an updated keyToVector
+		input.put("keyToVector", decompressedKeyToVector);
+
+		return input;
 	}
 
 }

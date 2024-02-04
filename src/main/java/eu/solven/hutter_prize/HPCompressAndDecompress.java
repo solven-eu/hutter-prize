@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.CompressColumns;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
+import eu.solven.hutter_prize.reversible.MathPreprocessor;
+import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
+import eu.solven.hutter_prize.reversible.PrePhd9Preprocessor;
+import eu.solven.hutter_prize.reversible.UrlPreprocessor;
 import eu.solven.hutter_prize.reversible.ZipToByteArray;
 
 public class HPCompressAndDecompress {
@@ -18,7 +22,16 @@ public class HPCompressAndDecompress {
 	static final IReversibleCompressor compressor = new CompositeReversibleCompressor(Arrays.asList(
 			// new ZipToByteArray(),
 			new HeaderArticlesFooter(),
+			// `MathPreprocessor` discards mathematical formulas, freeing a lot of small words
+			new MathPreprocessor(),
+			new UrlPreprocessor(),
+			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
 			new ColumnRepresentation(),
+			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
+			// We prefer Phd9Preprocessor to be applied only on the text column
+			// new CountMinSketchPreprocessor(),
+			new PrePhd9Preprocessor(),
+			new Phd9Preprocessor(),
 			new CompressColumns()));
 
 	public static void main(String[] args) throws IOException {
@@ -35,17 +48,23 @@ public class HPCompressAndDecompress {
 				HPUtils.nameAndSize(compressed));
 
 		Object decompressed = compressors.decompress(compressed);
-		LOGGER.info("{} decompressed into {}", HPUtils.nameAndSize(compressed), HPUtils.nameAndSize(decompressed));
+		LOGGER.info("{} decompressed from {}", HPUtils.nameAndSize(decompressed), HPUtils.nameAndSize(compressed));
 
+		boolean koMiddle = false;
 		String before = new String((byte[]) initialInputPreProcesses, StandardCharsets.UTF_8);
 		String after = new String((byte[]) decompressed, StandardCharsets.UTF_8);
 		for (int i = 0; i < before.length(); i++) {
 			if (i > after.length()) {
-				LOGGER.info("KO as AFTER is cut around {}", before.substring(i - 100, i + 100));
+				String aroundTail = before.substring(i - 100, Math.min(before.length(), i + 100));
+				LOGGER.info("KO as AFTER is cut around {}", aroundTail);
 				break;
 			}
 
 			if (before.charAt(i) != after.charAt(i)) {
+				LOGGER.info("KO around character index={}", i);
+
+				koMiddle = true;
+
 				int beforeKo = Math.max(0, i - 100);
 				int afterKoBefore = Math.min(before.length(), i + 100);
 				int afterKoAfter = Math.min(after.length(), i + 100);
@@ -62,9 +81,17 @@ public class HPCompressAndDecompress {
 			}
 		}
 
-		if (after.length() > before.length()) {
-			LOGGER.info("KO After has an unexpected tail: {}",
-					after.substring(before.length(), Math.min(before.length() + 100, after.length())));
+		boolean koEnd = false;
+		if (!koMiddle) {
+			if (after.length() > before.length()) {
+				koEnd = true;
+				LOGGER.info("KO After has an unexpected tail: {}",
+						after.substring(before.length(), Math.min(before.length() + 100, after.length())));
+			}
+		}
+
+		if (!koMiddle && !koEnd) {
+			LOGGER.info("This is a SUCCESS");
 		}
 	}
 }

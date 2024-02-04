@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -78,7 +79,7 @@ public class HPUtils {
 			return 4 * ((char[]) resource).length;
 		} else if (resource instanceof String) {
 			String string = (String) resource;
-			return string.length() + size(string.getBytes(StandardCharsets.UTF_8));
+			return size(string.getBytes(StandardCharsets.UTF_8));
 		} else if (resource instanceof IntList) {
 			List<?> list = (List<?>) resource;
 			return 4 * list.size();
@@ -107,9 +108,9 @@ public class HPUtils {
 		{
 			Pattern p = Pattern.compile(whitespacesRegex);
 			Matcher m = p.matcher(separator);
-			StringBuilder sb = new StringBuilder();
-			while (m.find()) {
-				String group = m.group();
+
+			humanFriendlySeparator = m.replaceAll(mr -> {
+				String group = mr.group();
 				String sanitizedWhitespace = group
 						// ` ` is replaced by a placeholder, to be restored later
 						.replace(' ', '_')
@@ -117,10 +118,21 @@ public class HPUtils {
 						.replace("\n", Matcher.quoteReplacement("\\n"))
 						.replaceAll(whitespacesRegex, "[ ]")
 						.replace('_', ' ');
-				m.appendReplacement(sb, sanitizedWhitespace);
-			}
-			m.appendTail(sb);
-			humanFriendlySeparator = sb.toString();
+				return sanitizedWhitespace;
+			});
+
+			Pattern p2 = Pattern.compile("\\p{C}");
+			humanFriendlySeparator = p2.matcher(separator).replaceAll(mr -> {
+				String group = mr.group();
+				int[] codePoints = group.codePoints().toArray();
+
+				if (codePoints.length != 1) {
+					throw new IllegalArgumentException("Arg: " + Arrays.toString(codePoints));
+				}
+
+				return "{" + codePoints[0] + "}";
+			});
+
 		}
 		return humanFriendlySeparator;
 	}
