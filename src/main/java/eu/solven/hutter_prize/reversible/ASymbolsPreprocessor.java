@@ -71,13 +71,13 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 			if (asMap.containsKey("body")) {
 				String body = asMap.get("body").toString();
 
-				String simplifiedBofy = transformString.apply(optContext.get(), body);
+				String simplifiedBody = transformString.apply(optContext.get(), body);
 
 				// Make sure we let transit other information in other fields
 				Map<String, Object> output = new LinkedHashMap<>(asMap);
 
 				// We preprocessed body
-				output.put("body", simplifiedBofy);
+				output.put("body", simplifiedBody);
 
 				return output;
 			} else if (asMap.containsKey("keyToVector")) {

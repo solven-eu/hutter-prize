@@ -6,26 +6,26 @@ import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import eu.solven.hutter_prize.reversible.UrlPreprocessor;
+import eu.solven.hutter_prize.reversible.TablePreprocessor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
-public class TestUrlPreprocessor {
-	final UrlPreprocessor preProcessor = new UrlPreprocessor();
+public class TestTablePreprocessor {
+	final TablePreprocessor preProcessor = new TablePreprocessor();
 
 	@Test
 	public void testGoogol() throws IOException {
-		String page = PepperResourceHelper.loadAsString("/pages/googol");
-		Assertions.assertThat(page).doesNotContain("math0").contains("http://www.googol.com/");
+		String page = PepperResourceHelper.loadAsString("/pages/a");
+		Assertions.assertThat(page).doesNotContain("table0_").contains("{| align=\"center\" cellspac");
 
 		Map<String, ?> compressed = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
 
-		Assertions.assertThat(compressed).containsKeys("body", "urls");
+		Assertions.assertThat(compressed).containsKeys("body", "tables");
 
 		Assertions.assertThat(compressed.get("body").toString())
-				.contains("url5")
-				.doesNotContain("http://www.googol.com/");
+				.contains("table0_")
+				.doesNotContain("{| align=\"center\" cellspac");
 
-		Assertions.assertThat(compressed.get("urls").toString()).contains("www.googol.com/");
+		Assertions.assertThat(compressed.get("tables").toString()).contains("align=\"center\" cellspac");
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);

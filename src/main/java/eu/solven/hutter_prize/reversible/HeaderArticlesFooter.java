@@ -21,7 +21,7 @@ public class HeaderArticlesFooter implements IReversibleCompressor {
 		byte[] bytes = (byte[]) input;
 		String string = new String(bytes, StandardCharsets.UTF_8);
 
-		LOGGER.info("{}{}{}", "Head of content:", System.lineSeparator(), string.substring(0, 2 * 1024));
+		LOGGER.info("{}{}{}", "Head of content:", System.lineSeparator(), string.substring(0, 16 * 1024));
 
 		String HEADER_FOOTER = "</siteinfo>";
 		int indexOfHeaderEnd = string.indexOf(HEADER_FOOTER) + HEADER_FOOTER.length();

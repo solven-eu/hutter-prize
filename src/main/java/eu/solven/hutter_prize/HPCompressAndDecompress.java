@@ -10,9 +10,12 @@ import org.slf4j.LoggerFactory;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.CompressColumns;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
+import eu.solven.hutter_prize.reversible.ImageRefPreprocessor;
 import eu.solven.hutter_prize.reversible.MathPreprocessor;
+import eu.solven.hutter_prize.reversible.PersistingCompressor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.PrePhd9Preprocessor;
+import eu.solven.hutter_prize.reversible.TablePreprocessor;
 import eu.solven.hutter_prize.reversible.UrlPreprocessor;
 import eu.solven.hutter_prize.reversible.ZipToByteArray;
 
@@ -25,6 +28,8 @@ public class HPCompressAndDecompress {
 			// `MathPreprocessor` discards mathematical formulas, freeing a lot of small words
 			new MathPreprocessor(),
 			new UrlPreprocessor(),
+			new ImageRefPreprocessor(),
+			new TablePreprocessor(),
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
 			new ColumnRepresentation(),
 			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
@@ -32,7 +37,9 @@ public class HPCompressAndDecompress {
 			// new CountMinSketchPreprocessor(),
 			new PrePhd9Preprocessor(),
 			new Phd9Preprocessor(),
-			new CompressColumns()));
+			new CompressColumns(),
+
+			new PersistingCompressor()));
 
 	public static void main(String[] args) throws IOException {
 		IReversibleCompressor compressors = HPCompressAndDecompress.compressor;
@@ -55,6 +62,7 @@ public class HPCompressAndDecompress {
 		String after = new String((byte[]) decompressed, StandardCharsets.UTF_8);
 		for (int i = 0; i < before.length(); i++) {
 			if (i > after.length()) {
+				koMiddle = true;
 				String aroundTail = before.substring(i - 100, Math.min(before.length(), i + 100));
 				LOGGER.info("KO as AFTER is cut around {}", aroundTail);
 				break;

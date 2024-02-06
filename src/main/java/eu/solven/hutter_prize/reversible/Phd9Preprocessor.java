@@ -81,14 +81,6 @@ public class Phd9Preprocessor extends ASymbolsPreprocessor {
 
 			String newPattern = e.getValue();
 
-			// Optional<String> optConflicting =
-			// appliedPatterns.values().stream().filter(s -> newPattern.contains(s)).findAny();
-			// if (optConflicting.isPresent()) {
-			// throw new IllegalStateException(HPUtils.encodeWhitespaceCharacters(cleanOldPattern) + " and "
-			// + HPUtils.encodeWhitespaceCharacters(optConflicting.get())
-			// + " would conflict");
-			// }
-
 			asString = asString.replaceAll(Pattern.quote(rawOldPatterm), newPattern);
 
 			appliedPatterns.put(rawOldPatterm, newPattern);
@@ -145,48 +137,53 @@ public class Phd9Preprocessor extends ASymbolsPreprocessor {
 			LOGGER.info("We have {} `&`", codePointToCountAfterHC.get("&".codePointAt(0)));
 		}
 
-		// We also looks for patterns like `*'''w'''`
-		for (int patternLength = minL; patternLength <= minL + maxAdditionalLength; patternLength++) {
-			LOGGER.info("Start length={}", patternLength);
+		if (false) {
 
-			// We record all patterns: while it may grow very large, it is kind of limited as we will get ride of words
-			AtomicLongMap<String> patternToCount = AtomicLongMap.create();
-			lengthToPatterns.put(patternLength, patternToCount);
+			// We also looks for patterns like `*'''w'''`
+			for (int patternLength = minL; patternLength <= minL + maxAdditionalLength; patternLength++) {
+				LOGGER.info("Start length={}", patternLength);
 
-			int listSize = list.size();
-			for (int stringIndex = 0; stringIndex < listSize; stringIndex++) {
-				// Each char is attached to its int value
-				Object rawInput = list.get(stringIndex);
-				if (rawInput instanceof String) {
-					String rawAsString = rawInput.toString();
+				// We record all patterns: while it may grow very large, it is kind of limited as we will get ride of
+				// words
+				AtomicLongMap<String> patternToCount = AtomicLongMap.create();
+				lengthToPatterns.put(patternLength, patternToCount);
 
-					String asString = replaceHC(replaceThem, rawAsString);
+				int listSize = list.size();
+				for (int stringIndex = 0; stringIndex < listSize; stringIndex++) {
+					// Each char is attached to its int value
+					Object rawInput = list.get(stringIndex);
+					if (rawInput instanceof String) {
+						String rawAsString = rawInput.toString();
 
-					String simplified = compactWords(asString);
+						String asString = replaceHC(replaceThem, rawAsString);
 
-					int[] codePoints = simplified.codePoints().toArray();
+						String simplified = compactWords(asString);
 
-					for (int s = 0; s < codePoints.length - patternLength; s++) {
-						String pattern = simplified.substring(s, s + patternLength);
-						if (canSpare(pattern, 1) > 0) {
-							patternToCount.incrementAndGet(pattern);
+						int[] codePoints = simplified.codePoints().toArray();
 
-							if (pattern.contains("://")) {
-								int i = 0;
-								int j = i + i;
-							} else if (pattern.contains("<w>")) {
-								int i = 0;
-								int j = i + i;
+						for (int s = 0; s < codePoints.length - patternLength; s++) {
+							String pattern = simplified.substring(s, s + patternLength);
+							if (canSpare(pattern, 1) > 0) {
+								patternToCount.incrementAndGet(pattern);
+
+								// if (pattern.contains("://")) {
+								// int i = 0;
+								// int j = i + i;
+								// } else if (pattern.contains("<w>")) {
+								// int i = 0;
+								// int j = i + i;
+								// }
 							}
 						}
 					}
 				}
+
+				report(patternToCount.asMap().entrySet());
 			}
 
-			report(patternToCount.asMap().entrySet());
+			proposeNewPatterns(lengthToPatterns);
 		}
 
-		proposeNewPatterns(lengthToPatterns);
 		return Map.of("replaceThem", replaceThem);
 	}
 

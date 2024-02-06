@@ -19,13 +19,13 @@ public class TestMathPreprocessor {
 
 		Map<String, ?> compressed = (Map<String, ?>) mathPreprocessor.compress(Map.of("body", page));
 
-		Assertions.assertThat(compressed).containsKeys("body", "math");
+		Assertions.assertThat(compressed).containsKeys("body", "formulas");
 
 		Assertions.assertThat(compressed.get("body").toString())
-				.contains("math(0)")
+				.contains("math_0_")
 				.doesNotContain("10^{8 \\times 10^{16}}");
 
-		Assertions.assertThat(compressed.get("math").toString()).contains("10^{8 \\times 10^{16}}");
+		Assertions.assertThat(compressed.get("formulas").toString()).contains("10^{8 \\times 10^{16}}");
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) mathPreprocessor.decompress(compressed);
