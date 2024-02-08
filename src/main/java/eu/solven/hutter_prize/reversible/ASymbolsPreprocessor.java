@@ -69,7 +69,7 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 					try {
 						c = transformString.compress(context, i, o.toString());
 					} catch (RuntimeException e) {
-						throw new IllegalStateException("Issue (de)compressing index=" + i);
+						throw new IllegalStateException("Issue (de)compressing index=" + i, e);
 					}
 				} else {
 					c = o;

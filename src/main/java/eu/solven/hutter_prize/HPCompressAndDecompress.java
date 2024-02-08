@@ -7,7 +7,8 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.solven.hutter_prize.reversible.AutocompletePreprocessor;
+import eu.solven.hutter_prize.reversible.AutocompleteStemmingPreprocessor;
+import eu.solven.hutter_prize.reversible.AutocompleteWholeWordPreprocessor;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.CompressColumns;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
@@ -43,7 +44,8 @@ public class HPCompressAndDecompress {
 			new PrePhd9Preprocessor(),
 			new Phd9Preprocessor(),
 
-			new AutocompletePreprocessor(),
+			new AutocompleteStemmingPreprocessor(),
+			new AutocompleteWholeWordPreprocessor(),
 
 			new CompressColumns(),
 

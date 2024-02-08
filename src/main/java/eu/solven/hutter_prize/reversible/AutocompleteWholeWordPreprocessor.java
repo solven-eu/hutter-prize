@@ -24,8 +24,8 @@ import com.google.common.base.Strings;
  * @author Benoit Lacelle
  *
  */
-public class AutocompletePreprocessor extends ASymbolsPreprocessor {
-	private static final Logger LOGGER = LoggerFactory.getLogger(AutocompletePreprocessor.class);
+public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
+	private static final Logger LOGGER = LoggerFactory.getLogger(AutocompleteWholeWordPreprocessor.class);
 
 	// Given we look for repeteting words, there is no need to look at the whole context: a relevant word would repeat
 	// itself, and keep present at any position on the List of previous words
