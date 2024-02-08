@@ -7,6 +7,7 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.solven.hutter_prize.reversible.AutocompletePreprocessor;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.CompressColumns;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
@@ -32,11 +33,18 @@ public class HPCompressAndDecompress {
 			new TablePreprocessor(),
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
 			new ColumnRepresentation(),
+
+			// new WordAnalysisPreprocessor(),
+			// new LexicalFieldPreprocessor(),
+
 			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
 			// We prefer Phd9Preprocessor to be applied only on the text column
 			// new CountMinSketchPreprocessor(),
 			new PrePhd9Preprocessor(),
 			new Phd9Preprocessor(),
+
+			new AutocompletePreprocessor(),
+
 			new CompressColumns(),
 
 			new PersistingCompressor()));

@@ -36,14 +36,14 @@ public class Phd9Preprocessor extends ASymbolsPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Phd9Preprocessor.class);
 
 	@Override
-	protected String compressString(Map<String, ?> context, String string) {
+	protected String compressString(Map<String, ?> context, int index, String string) {
 		Map<String, String> replaceThem = (Map<String, String>) context.get("replaceThem");
 
 		return replaceHC(replaceThem, string);
 	}
 
 	@Override
-	protected String decompressString(Map<String, ?> context, String string) {
+	protected String decompressString(Map<String, ?> context, int index, String string) {
 		Map<String, String> compressingReplaceThem = (Map<String, String>) context.get("replaceThem");
 
 		Map<String, String> decompressingReplaceThem = reverseReplaceThem(compressingReplaceThem);

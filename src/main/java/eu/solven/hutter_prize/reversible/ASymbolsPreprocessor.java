@@ -1,14 +1,13 @@
 package eu.solven.hutter_prize.reversible;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
 import eu.solven.pepper.collection.PepperMapHelper;
@@ -19,12 +18,16 @@ import eu.solven.pepper.collection.PepperMapHelper;
  *
  */
 public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
+	static interface IProcessString {
+		String compress(Map<String, ?> context, int index, String string);
+	}
+
 	@Override
 	public Object compress(Object input) throws IOException {
 		return process(true, this::compressString, input, Optional.empty());
 	}
 
-	protected String compressString(Map<String, ?> context, String string) {
+	protected String compressString(Map<String, ?> context, int index, String string) {
 		return string;
 	}
 
@@ -33,18 +36,18 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 		return process(false, this::decompressString, compressed, Optional.empty());
 	}
 
-	protected String decompressString(Map<String, ?> context, String string) {
+	protected String decompressString(Map<String, ?> context, int index, String string) {
 		return string;
 	}
 
 	protected Object process(boolean compressing,
-			BiFunction<Map<String, ?>, String, String> transformString,
+			IProcessString transformString,
 			Object compressed,
 			Optional<Map<String, ?>> optContext) throws IOException {
 		if (compressed instanceof String) {
 			String string = (String) compressed;
 
-			return transformString.apply(optContext.get(), string);
+			return transformString.compress(optContext.orElse(Map.of()), -1, string);
 		} else if (compressed instanceof List<?>) {
 			List<?> list = (List<?>) compressed;
 
@@ -58,20 +61,31 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 
 			Map<String, ?> context = optContext.get();
 
-			return list.stream().map(o -> {
+			List<Object> output = new ArrayList<>(list.size());
+			for (int i = 0; i < list.size(); i++) {
+				Object o = list.get(i);
+				Object c;
 				if (o instanceof String) {
-					return transformString.apply(context, o.toString());
+					try {
+						c = transformString.compress(context, i, o.toString());
+					} catch (RuntimeException e) {
+						throw new IllegalStateException("Issue (de)compressing index=" + i);
+					}
 				} else {
-					return o;
+					c = o;
 				}
-			}).collect(Collectors.toList());
+
+				output.add(c);
+			}
+
+			return output;
 		} else if (compressed instanceof Map<?, ?>) {
 			Map<String, ?> asMap = (Map<String, ?>) compressed;
 
 			if (asMap.containsKey("body")) {
 				String body = asMap.get("body").toString();
 
-				String simplifiedBody = transformString.apply(optContext.get(), body);
+				String simplifiedBody = transformString.compress(optContext.orElse(Map.of()), -1, body);
 
 				// Make sure we let transit other information in other fields
 				Map<String, Object> output = new LinkedHashMap<>(asMap);
@@ -83,11 +97,13 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 			} else if (asMap.containsKey("keyToVector")) {
 				assert optContext.isEmpty();
 
+				String contextKey = "keyToContext-" + this.getClass().getSimpleName();
+
 				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, "keyToVector");
 				Map<String, Object> keyToVectorOutput = new LinkedHashMap<>(keyToVector);
 
 				Map<String, Object> keyToContext =
-						compressing ? new TreeMap<>() : PepperMapHelper.getRequiredAs(asMap, "keyToContext");
+						compressing ? new TreeMap<>() : PepperMapHelper.getRequiredAs(asMap, contextKey);
 
 				if (keyToVector.containsKey("text")) {
 					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, "text");
@@ -121,7 +137,7 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 				decompressed.put("keyToVector", keyToVectorOutput);
 
 				if (compressing) {
-					decompressed.put("keyToContext", keyToContext);
+					decompressed.put(contextKey, keyToContext);
 				}
 
 				return decompressed;

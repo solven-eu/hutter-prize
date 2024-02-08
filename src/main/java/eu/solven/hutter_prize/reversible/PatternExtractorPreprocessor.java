@@ -60,6 +60,7 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 
 		String pages = (String) asMap.get("body");
 
+		// Collect all `mathXXX` words once and for all
 		Map.Entry<String, Map<String, String>> compressed = processString(pages);
 
 		LOGGER.info("Input with `{}` has been turned from length={} to length={}",
@@ -84,9 +85,7 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 		AtomicInteger mathIndex = new AtomicInteger();
 		Map<String, String> shortcutToFormula = new HashMap<>();
 
-		// Collect all `mathXXX` words once and for all
-		Set<String> mathWordsAlreadyPresent = new HashSet<>();
-		patternWords.matcher(string).results().forEach(mr -> mathWordsAlreadyPresent.add(mr.group()));
+		Set<String> mathWordsAlreadyPresent = lookForExistingShortcuts(patternWords, string);
 
 		// https://javascript.info/regexp-greedy-and-lazy
 		Matcher matcher = Pattern.compile(openMath + "(.*?)" + closeMath, Pattern.DOTALL).matcher(string);
@@ -106,11 +105,18 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 			return shortcut;
 		});
 
-		LOGGER.info("We detected {} math formulas. {} distinct",
+		LOGGER.info("We detected {} {} entries. {} distinct",
 				shortcutToFormula.size(),
+				mapKey,
 				shortcutToFormula.values().stream().distinct().count());
 
 		return Maps.immutableEntry(replacedString, shortcutToFormula);
+	}
+
+	public static Set<String> lookForExistingShortcuts(Pattern pattern, String string) {
+		Set<String> mathWordsAlreadyPresent = new HashSet<>();
+		pattern.matcher(string).results().forEach(mr -> mathWordsAlreadyPresent.add(mr.group()));
+		return mathWordsAlreadyPresent;
 	}
 
 	// https://stackoverflow.com/questions/12423071/how-to-remove-escape-characters-from-a-string-in-java
