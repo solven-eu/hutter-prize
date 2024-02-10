@@ -73,13 +73,8 @@ public class ExampleQuestionAnswering {
 				 */
 
 				int reportEveryNthEpoch = 10;
-				double loss = Trainer.train(epochsPerTask,
-						learningRate,
-						nn,
-						data,
-						reportEveryNthEpoch,
-						rng,
-						new AtomicReference<>());
+				double loss = Trainer
+						.train(epochsPerTask, learningRate, nn, data, reportEveryNthEpoch, rng).reportedLossTrain;
 				losses[task] += loss;
 				System.out.println("\nFINAL: " + String.format("%.1f", (100 * (1 - loss))) + "% accuracy");
 			}

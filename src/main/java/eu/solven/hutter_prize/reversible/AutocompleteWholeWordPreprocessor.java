@@ -1,6 +1,5 @@
 package eu.solven.hutter_prize.reversible;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -27,18 +26,41 @@ import com.google.common.base.Strings;
 public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AutocompleteWholeWordPreprocessor.class);
 
+	private static final boolean DEBUG = true;
+
 	// Given we look for repeteting words, there is no need to look at the whole context: a relevant word would repeat
 	// itself, and keep present at any position on the List of previous words
 	private static final int PREVIOUS_WORDS_MAX = 128;
 
+	private final int previousWordMax;
+
+	public AutocompleteWholeWordPreprocessor(int previousWordMax) {
+		assert previousWordMax >= 1;
+		this.previousWordMax = previousWordMax;
+	}
+
+	public AutocompleteWholeWordPreprocessor() {
+		this(PREVIOUS_WORDS_MAX);
+	}
+
 	@Override
 	protected String compressString(Map<String, ?> context, int index, String string) {
+		if (index == 296) {
+			// System.out.println(string);
+		}
+
 		// Escape by doubling
-		string = string.replaceAll("<", "<<").replaceAll(">", ">>");
+		String escaped = string.replaceAll("<", "<<").replaceAll(">", ">>");
 
 		LinkedList<String> previousWords = new LinkedList<>();
-		return Pattern.compile("\\w{3,}").matcher(string).replaceAll(mr -> {
+		// https://stackoverflow.com/questions/899422/regular-expression-for-a-string-that-does-not-start-with-a-sequence
+		// We have issues with negative look-behind as it correctly rejects `<<some`, but it accepts `<some`
+		String compressed = Pattern.compile("(?<![\\w<]{2})\\w{3,}(?![\\w>]{2})").matcher(escaped).replaceAll(mr -> {
 			String word = mr.group();
+
+			// if (DEBUG && word.equals("com")) {
+			// System.out.println();
+			// }
 
 			int foundIndex = -1;
 			ListIterator<String> iterator = previousWords.listIterator(previousWords.size());
@@ -60,10 +82,10 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 				assert iterator.nextIndex() == foundIndex;
 				iterator.next();
 
-				int commonPrefixLength = 0;
-				int commonSuffixLength = 0;
+				int intermediateCommonPrefixLength = 0;
+				int intermediateCommonSuffixLength = 0;
 
-				// Iterate forward in order to know what is the required prefix to find the same word i nthe previous
+				// Iterate forward in order to know what is the required prefix to find the same word in the previous
 				// words
 				while (iterator.hasNext()) {
 					String intermediateWord = iterator.next();
@@ -71,7 +93,8 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 					String commonPrefix = Strings.commonPrefix(word, intermediateWord);
 
 					if (commonPrefix.length() >= 1) {
-						commonPrefixLength = Math.max(commonPrefixLength, commonPrefix.length());
+						intermediateCommonPrefixLength =
+								Math.max(intermediateCommonPrefixLength, commonPrefix.length());
 						// reduced = commonPrefix.length() + ">";
 						// break;
 					}
@@ -79,27 +102,34 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 					String commonSuffix = Strings.commonSuffix(word, intermediateWord);
 
 					if (commonSuffix.length() >= 1) {
-						commonSuffixLength = Math.max(commonSuffixLength, commonSuffix.length());
+						intermediateCommonSuffixLength =
+								Math.max(intermediateCommonSuffixLength, commonSuffix.length());
 						// reduced = "<" + commonSuffix.length();
 						// break;
 					}
+
+					int keptLength = keptLength(intermediateCommonPrefixLength, intermediateCommonSuffixLength);
+					if (!isUseful(word, keptLength)) {
+						// We have at best 1 char spared: it is pointless as we will ose 1 char in `>` or `<`
+						break;
+					}
 				}
 
-				int minimalLeftover = Math.min(commonSuffixLength, commonPrefixLength);
-				// -1 as we pay for `>`
-				int canSpare = word.length() - minimalLeftover - 1;
+				int keptLength = keptLength(intermediateCommonPrefixLength, intermediateCommonSuffixLength);
 
-				if (canSpare > 0) {
-					// +1 as we need a single char (at least) to find back the proper word
-					int keptLength = minimalLeftover + 1;
+				if (isUseful(word, keptLength)) {
 
-					if (commonPrefixLength > commonSuffixLength) {
+					if (intermediateCommonPrefixLength > intermediateCommonSuffixLength) {
 						// We prefer autocompleting by suffix
 						reduced = "<" + word.substring(word.length() - keptLength, word.length());
 					} else {
 						reduced = word.substring(0, keptLength) + ">";
 					}
 				}
+			}
+
+			if (DEBUG && !reduced.isEmpty()) {
+				// System.out.println(reduced + " given " + previousWords);
 			}
 
 			registerPreviousWord(previousWords, word);
@@ -111,11 +141,32 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 			}
 		});
 
+		if (DEBUG) {
+			assert decompressString(context, index, compressed).equals(string);
+		}
+		return compressed;
+
+	}
+
+	private int keptLength(int intermediateCommonPrefixLength, int intermediateCommonSuffixLength) {
+		// We minimize between either autocompleting left or autocompleting right
+		int minimalLeftover = Math.min(intermediateCommonSuffixLength, intermediateCommonPrefixLength);
+
+		// +1 as we need a single char (at least) to find back the proper word
+		int keptLength = minimalLeftover + 1;
+
+		return keptLength;
+	}
+
+	private boolean isUseful(String word, int keptLength) {
+
+		// + 1 as we pay for `<` or `>`
+		return keptLength + 1 < word.length();
 	}
 
 	private void registerPreviousWord(LinkedList<String> previousWords, String word) {
 		// Update the sliding window of N words
-		if (previousWords.size() >= PREVIOUS_WORDS_MAX) {
+		if (previousWords.size() >= previousWordMax) {
 			previousWords.removeFirst();
 		}
 		previousWords.add(word);
@@ -125,60 +176,76 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 	protected String decompressString(Map<String, ?> context, int index, String string) {
 		LinkedList<String> previousWords = new LinkedList<>();
 
-		// Escape by doubling
+		// The 3rd block wants to catch simple words: we have to ensure it does not catch `word` in `word>>`, so we
+		// forbid both `\w` and `>` in the lookahead|behinds
+		String autocompleted = Pattern.compile("((?<!<)<\\w+|\\w+>(?!>)|(?<![<\\w])\\w{3,}(?![>\\w]))")
+				.matcher(string)
+				.replaceAll(mr -> {
+					String word = mr.group();
 
-		String autocompleted = Pattern.compile("(<<?\\w+|\\w+>>?|\\w{3,})").matcher(string).replaceAll(mr -> {
-			String word = mr.group();
+					if (word.contains("_")) {
+						// System.out.println(word);
+					}
 
-			String completeWord = word;
+					String completeWord = word;
 
-			try {
-				if (!word.startsWith("<") && !word.endsWith(">")) {
-					// This is an escaped autocomplete symbol
-					return word;
-				} else if (word.startsWith("<<") || word.endsWith(">>")) {
-					// This is an escaped autocomplete symbol
-					return word;
-				}
-
-				if (word.endsWith(">")) {
-					String commonPrefix = word.substring(0, word.length() - 1);
-
-					Iterator<String> iterator = previousWords.descendingIterator();
-					while (iterator.hasNext()) {
-						String previousWord = iterator.next();
-
-						if (previousWord.startsWith(commonPrefix)) {
-							completeWord = previousWord;
-							return previousWord;
+					try {
+						if (!word.startsWith("<") && !word.endsWith(">")) {
+							// This is an escaped autocomplete symbol
+							return word;
+						} else if (word.startsWith("<<") || word.endsWith(">>")) {
+							// This is an escaped autocomplete symbol
+							return word;
 						}
 
-					}
-				}
-				if (word.startsWith("<")) {
-					String commonSuffix = word.substring(1);
+						if (word.endsWith(">")) {
+							String commonPrefix = word.substring(0, word.length() - 1);
 
-					Iterator<String> iterator = previousWords.descendingIterator();
-					while (iterator.hasNext()) {
-						String previousWord = iterator.next();
+							Iterator<String> iterator = previousWords.descendingIterator();
+							while (iterator.hasNext()) {
+								String previousWord = iterator.next();
 
-						if (previousWord.endsWith(commonSuffix)) {
-							completeWord = previousWord;
-							return previousWord;
+								if (previousWord.startsWith(commonPrefix)) {
+									completeWord = previousWord;
+									return previousWord;
+								}
+
+							}
+						}
+						if (word.startsWith("<")) {
+							String commonSuffix = word.substring(1);
+
+							Iterator<String> iterator = previousWords.descendingIterator();
+							while (iterator.hasNext()) {
+								String previousWord = iterator.next();
+
+								if (previousWord.endsWith(commonSuffix)) {
+									completeWord = previousWord;
+									return previousWord;
+								}
+
+							}
 						}
 
+						LOGGER.warn("Issue decompressing: {}{}", System.lineSeparator(), string);
+						throw new IllegalStateException(
+								"No valid autocompletion for `" + word + "` given previous words: " + previousWords);
+					} finally {
+						if (DEBUG && !completeWord.equals(word)) {
+							// System.out.println(completeWord + " given " + previousWords);
+						}
+
+						assert !completeWord.isEmpty();
+
+						// if (completeWord.startsWith("<<")) {
+						// System.out.println();
+						// }
+						registerPreviousWord(previousWords, completeWord);
 					}
-				}
+				});
 
-				throw new IllegalStateException(
-						"No valid autocompletion for " + word + " given previous words: " + previousWords);
-			} finally {
-				assert !completeWord.isEmpty();
-				registerPreviousWord(previousWords, completeWord);
-			}
-		});
-
-		return autocompleted.replaceAll("<<", "<").replaceAll(">>", ">");
+		String unescaped = autocompleted.replaceAll("<<", "<").replaceAll(">>", ">");
+		return unescaped;
 	}
 
 }

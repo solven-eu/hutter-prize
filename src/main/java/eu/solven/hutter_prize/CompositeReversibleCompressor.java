@@ -40,7 +40,13 @@ public class CompositeReversibleCompressor implements IReversibleCompressor {
 		Object input = output;
 
 		for (IReversibleCompressor compressor : Lists.reverse(compressors)) {
-			Object newInput = compressor.decompress(input);
+			Object newInput;
+			try {
+				newInput = compressor.decompress(input);
+			} catch (RuntimeException e) {
+				// Do not add the input in the message, as it is a representation of the whole input
+				throw new IllegalArgumentException("Issue with " + compressor.getClass().getSimpleName(), e);
+			}
 
 			LOGGER.info("{} uncompressed {} from {}",
 					compressor.getClass().getSimpleName(),

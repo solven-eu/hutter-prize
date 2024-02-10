@@ -1,31 +1,36 @@
 package eu.solven.hutter_prize.recurrent_java;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.solven.hutter_prize.HPCompressAndDecompress;
+import eu.solven.hutter_prize.HPUtils;
+import eu.solven.hutter_prize.IReversibleCompressor;
 import eu.solven.hutter_prize.recurrent_java.datasets.TextGeneration;
 import eu.solven.hutter_prize.recurrent_java.model.Model;
 import eu.solven.hutter_prize.recurrent_java.trainer.Trainer;
 import eu.solven.hutter_prize.recurrent_java.util.NeuralNetworkHelper;
+import eu.solven.hutter_prize.reversible.ZipToByteArray;
 import eu.solven.pepper.io.PepperSerializationHelper;
 import eu.solven.pepper.memory.PepperMemoryHelper;
 
-public class ExamplePaulGraham {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ExamplePaulGraham.class);
+public class ExampleEnwik {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExampleEnwik.class);
 
 	public static void main(String[] args) throws Exception {
+		Object initialInput = HPUtils.zipped;
 
-		/*
-		 * Character-by-character sentence prediction and generation, closely following the example here:
-		 * https://github.com/karpathy/recurrentjs
-		 */
+		// We remove the initial ZIP impact from the analysis
+		Object initialInputPreProcesses = new ZipToByteArray().compress(initialInput);
 
-		String textSource = "PaulGraham";
-		TextGeneration data = new TextGeneration("datasets/text/" + textSource + ".txt");
-		String savePath = "saved_models/" + textSource + ".ser";
+		String asString = new String((byte[]) initialInputPreProcesses, StandardCharsets.UTF_8);
+
+		TextGeneration data = new TextGeneration(asString);
+		// String savePath = "saved_models/" + textSource + ".ser";
 		boolean initFromSaved = false; // set this to false to start with a fresh model
 		boolean overwriteSaved = true;
 
@@ -55,7 +60,7 @@ public class ExamplePaulGraham {
 		int reportEveryNthEpoch = 10;
 		int trainingEpochs = 10;
 
-		AtomicReference<Model> refModel = new AtomicReference<>();
+		// AtomicReference<Model> refModel = new AtomicReference<>();
 		Trainer.train(trainingEpochs,
 				learningRate,
 				lstm,
@@ -67,6 +72,9 @@ public class ExamplePaulGraham {
 				rng);
 
 		System.out.println("done.");
+
+		String modelAsString = PepperSerializationHelper.toString(lstm);
+		String fileName = "hp-lstm-bns_" + bottleneckSize + "-hd_" + hiddenDimension + ".nn";
 
 		// data.DisplayReport(lstm, rng);
 

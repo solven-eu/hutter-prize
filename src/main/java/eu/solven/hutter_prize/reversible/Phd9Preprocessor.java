@@ -4,23 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.PrimitiveIterator.OfInt;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.util.concurrent.AtomicLongMap;
 
 import eu.solven.hutter_prize.HPUtils;
 
@@ -108,90 +99,14 @@ public class Phd9Preprocessor extends ASymbolsPreprocessor {
 
 	@Override
 	protected Map<String, ?> analyzeList(List<?> list) {
-		// We search for patterns like `&gt;` or `[a]`. We also looks for patterns of length 2 as it make it easy to
-		// understand patterns like `[[`
-		int minL = 2;
-		int maxAdditionalLength = 8;
-
-		Map<Integer, AtomicLongMap<String>> lengthToPatterns = new HashMap<>();
-
-		AtomicLongMap<Integer> codePointToCount = analyzeCodePoints(list, s -> s);
-
-		// ASCII before 32 are not printable
-		OfInt availableCodePoints =
-				IntStream.iterate(0, i -> i + 1).filter(codePoint -> 0 == codePointToCount.get(codePoint)
-				// For a human, it is easier to read `{128}` than some weird and unusual symbol
-				// && HPUtils.encodeWhitespaceCharacters(Character.toString(i)).length() == 1
-				).peek(codePoint -> {
-					LOGGER.info("{} ({}) is used as replacement",
-							HPUtils.encodeWhitespaceCharacters(Character.toString(codePoint)),
-							codePoint);
-				}).iterator();
-
-		Map<String, String> replaceThem = hcReplaceThem(availableCodePoints);
+		Map<String, String> replaceThem = hcReplaceThem();
 		checkIsSafe(replaceThem);
-
-		// This could be used to ensure it is safe to replace `&amp;` by `&`
-		if (false) {
-			AtomicLongMap<Integer> codePointToCountAfterHC = analyzeCodePoints(list, s -> replaceHC(replaceThem, s));
-			LOGGER.info("We have {} `&`", codePointToCountAfterHC.get("&".codePointAt(0)));
-		}
-
-		if (false) {
-
-			// We also looks for patterns like `*'''w'''`
-			for (int patternLength = minL; patternLength <= minL + maxAdditionalLength; patternLength++) {
-				LOGGER.info("Start length={}", patternLength);
-
-				// We record all patterns: while it may grow very large, it is kind of limited as we will get ride of
-				// words
-				AtomicLongMap<String> patternToCount = AtomicLongMap.create();
-				lengthToPatterns.put(patternLength, patternToCount);
-
-				int listSize = list.size();
-				for (int stringIndex = 0; stringIndex < listSize; stringIndex++) {
-					// Each char is attached to its int value
-					Object rawInput = list.get(stringIndex);
-					if (rawInput instanceof String) {
-						String rawAsString = rawInput.toString();
-
-						String asString = replaceHC(replaceThem, rawAsString);
-
-						String simplified = compactWords(asString);
-
-						int[] codePoints = simplified.codePoints().toArray();
-
-						for (int s = 0; s < codePoints.length - patternLength; s++) {
-							String pattern = simplified.substring(s, s + patternLength);
-							if (canSpare(pattern, 1) > 0) {
-								patternToCount.incrementAndGet(pattern);
-
-								// if (pattern.contains("://")) {
-								// int i = 0;
-								// int j = i + i;
-								// } else if (pattern.contains("<w>")) {
-								// int i = 0;
-								// int j = i + i;
-								// }
-							}
-						}
-					}
-				}
-
-				report(patternToCount.asMap().entrySet());
-			}
-
-			proposeNewPatterns(lengthToPatterns);
-		}
 
 		return Map.of("replaceThem", replaceThem);
 	}
 
-	public static Map<String, String> hcReplaceThem(OfInt availableCodePoints) {
+	public static Map<String, String> hcReplaceThem() {
 		Map<String, String> replaceThem = new LinkedHashMap<>();
-		// https://fr.wikipedia.org/wiki/Mod%C3%A8le:Ref
-		replaceThem.put("&lt;ref&gt;", Character.toString(availableCodePoints.nextInt()));
-		replaceThem.put("&lt;/ref&gt;", Character.toString(availableCodePoints.nextInt()));
 
 		replaceThem.put("&lt;", "<");
 		replaceThem.put("&gt;", ">");
@@ -199,84 +114,7 @@ public class Phd9Preprocessor extends ASymbolsPreprocessor {
 		// `&amp;` is last to prevent conflicts
 		replaceThem.put("&amp;", "&");
 
-		// BEWARE It is ambiguous to accept ` ` as pattern lead|tail character, as it may be easy to foresee by some
-		// predicator
-		replaceThem.put(" [[", Character.toString(availableCodePoints.nextInt()));
-		replaceThem.put("[[", Character.toString(availableCodePoints.nextInt()));
-		replaceThem.put("]] ", Character.toString(availableCodePoints.nextInt()));
-		replaceThem.put("]]", Character.toString(availableCodePoints.nextInt()));
-
-		replaceThem.put(" ''", Character.toString(availableCodePoints.nextInt()));
-		replaceThem.put("''", Character.toString(availableCodePoints.nextInt()));
 		return replaceThem;
-	}
-
-	private AtomicLongMap<Integer> analyzeCodePoints(List<?> list, Function<String, String> preprocess) {
-		AtomicLongMap<Integer> codePointToCount;
-		codePointToCount = AtomicLongMap.create();
-		{
-			for (Object rawInput : list) {
-				// Each char is attached to its int value
-				if (rawInput instanceof String) {
-					String asString = preprocess.apply(rawInput.toString());
-
-					asString.codePoints().forEach(codePointToCount::incrementAndGet);
-				}
-			}
-		}
-
-		LOGGER.info("Total codePoints: {}", codePointToCount.sum());
-
-		codePointToCount.asMap()
-				.entrySet()
-				.stream()
-				.sorted(Comparator.comparing(e -> -e.getValue()))
-				.limit(200)
-				.forEach(e -> {
-					int codePoint = e.getKey().intValue();
-					LOGGER.info("Codepoint {} (`{}`) is printed {} times",
-							codePoint,
-							HPUtils.encodeWhitespaceCharacters(Character.toString(codePoint)),
-							e.getValue());
-				});
-
-		// The following is useful to know which codePoints are going to be used as block markers
-		// ASCII before 32 are not printable
-		for (int i = 0; i < 512; i++) {
-			if (0 == codePointToCount.get(i)
-			// For a human, it is easier to read `{128}` than some weird and unusual symbol
-			// && HPUtils.encodeWhitespaceCharacters(Character.toString(i)).length() == 1
-			) {
-				LOGGER.debug("{} ({}) is available", HPUtils.encodeWhitespaceCharacters(Character.toString(i)), i);
-			}
-		}
-
-		return codePointToCount;
-	}
-
-	private Set<String> proposeNewPatterns(Map<Integer, AtomicLongMap<String>> lengthToPatterns) {
-		Map<String, Long> top100 = new TreeMap<>();
-
-		// TODO We should let `w` contribute into `z`, as a `w` can be catched by a soften `z`
-		lengthToPatterns.values()
-				.stream()
-				.flatMap(am -> am.asMap().entrySet().stream())
-				.sorted(Comparator.comparing(e -> {
-					String symbol = e.getKey();
-					long countOccurences = e.getValue();
-
-					return -canSpare(symbol, countOccurences);
-				}))
-				.limit(100)
-				.peek(e -> {
-					LOGGER.info("`{}` has the potential to spare {} chars (count={})",
-							HPUtils.encodeWhitespaceCharacters(e.getKey()),
-							canSpare(e.getKey(), e.getValue()),
-							e.getValue());
-				})
-				.forEach(e -> top100.put(e.getKey(), e.getValue()));
-
-		return top100.keySet();
 	}
 
 	public static String compactWords(String asString) {

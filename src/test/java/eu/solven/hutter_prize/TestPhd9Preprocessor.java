@@ -10,6 +10,7 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 
+import eu.solven.hutter_prize.reversible.Phd9AdvancedPreprocessor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 
 public class TestPhd9Preprocessor {
@@ -120,7 +121,8 @@ public class TestPhd9Preprocessor {
 	@Test
 	public void testReplaceThem_hc() {
 		// 65 is A, 90 is Z
-		Map<String, String> replaceThem = Phd9Preprocessor.hcReplaceThem(IntStream.rangeClosed(65, 90).iterator());
+		Map<String, String> replaceThem =
+				Phd9AdvancedPreprocessor.advancedHcReplaceThem(IntStream.rangeClosed(65, 90).iterator());
 
 		Phd9Preprocessor.checkIsSafe(replaceThem);
 	}

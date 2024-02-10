@@ -12,11 +12,13 @@ import eu.solven.hutter_prize.reversible.AutocompleteWholeWordPreprocessor;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.CompressColumns;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
+import eu.solven.hutter_prize.reversible.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.ImageRefPreprocessor;
 import eu.solven.hutter_prize.reversible.MathPreprocessor;
 import eu.solven.hutter_prize.reversible.PersistingCompressor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
-import eu.solven.hutter_prize.reversible.PrePhd9Preprocessor;
+import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
+import eu.solven.hutter_prize.reversible.SomeAlphabetPreprocessor;
 import eu.solven.hutter_prize.reversible.TablePreprocessor;
 import eu.solven.hutter_prize.reversible.UrlPreprocessor;
 import eu.solven.hutter_prize.reversible.ZipToByteArray;
@@ -31,21 +33,52 @@ public class HPCompressAndDecompress {
 			new MathPreprocessor(),
 			new UrlPreprocessor(),
 			new ImageRefPreprocessor(),
+			new ImageLowercaseRefPreprocessor(),
 			new TablePreprocessor(),
+
+			// new SomeAlphabetPreprocessor("ko"),
+			// new SomeAlphabetPreprocessor("ja"),
+			// new SomeAlphabetPreprocessor("zh"),
+			// new SomeAlphabetPreprocessor("zh-min-nan"),
+			// new SomeAlphabetPreprocessor("ar"),
+			// new SomeAlphabetPreprocessor("ru"),
+			// new SomeAlphabetPreprocessor("uk"),
+			// new SomeAlphabetPreprocessor("bg"),
+			// new SomeAlphabetPreprocessor("bn"),
+			// new SomeAlphabetPreprocessor("he"),
+			// new SomeAlphabetPreprocessor("os"),
+			// new SomeAlphabetPreprocessor("fa"),
+			// new SomeAlphabetPreprocessor("hi"),
+			// new SomeAlphabetPreprocessor("th"),
+			// new SomeAlphabetPreprocessor("mk"),
+			// new SomeAlphabetPreprocessor("ka"),
+			// new SomeAlphabetPreprocessor("sa"),
+			// new SomeAlphabetPreprocessor("yi"),
+			// new SomeAlphabetPreprocessor("ta"),
+			// new SomeAlphabetPreprocessor("gu"),
+			// new SomeAlphabetPreprocessor("sr"),
+
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
 			new ColumnRepresentation(),
 
 			// new WordAnalysisPreprocessor(),
 			// new LexicalFieldPreprocessor(),
 
+			// Phd9 may be commented as it makes files less human-readable, which is painful during development phase
 			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
 			// We prefer Phd9Preprocessor to be applied only on the text column
 			// new CountMinSketchPreprocessor(),
-			new PrePhd9Preprocessor(),
+			// new PrePhd9Preprocessor(),
 			new Phd9Preprocessor(),
+			// new Phd9AdvancedPreprocessor(),
 
-			new AutocompleteStemmingPreprocessor(),
+			// This will turn `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
+			new SentenceStartsWithUCPreprocessor(),
+			// This would escape `<` into `<<`
+			// This would escape `>` into `>>`
 			new AutocompleteWholeWordPreprocessor(),
+			// This would escape `>\w` into `>>\w`
+			new AutocompleteStemmingPreprocessor(),
 
 			new CompressColumns(),
 

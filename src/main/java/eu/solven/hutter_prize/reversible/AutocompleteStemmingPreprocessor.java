@@ -10,8 +10,6 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.CharMatcher;
-
 import smile.nlp.stemmer.LancasterStemmer;
 
 /**
@@ -29,31 +27,34 @@ import smile.nlp.stemmer.LancasterStemmer;
 public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AutocompleteStemmingPreprocessor.class);
 
-	// Given we look for repeteting words, there is no need to look at the whole context: a relevant word would repeat
+	// Given we look for repeating words, there is no need to look at the whole context: a relevant word would repeat
 	// itself, and keep present at any position on the List of previous words
-	private static final int PREVIOUS_STEMS_MAX = 16;
+	private static final int PREVIOUS_STEMS_MAX = 64;
+
+	private int previousStemsMax;
 
 	// https://www.cs.toronto.edu/~frank/csc2501/Readings/R2_Porter/Porter-1980.pdf
 	final LancasterStemmer stemmer = new LancasterStemmer();
 
+	public AutocompleteStemmingPreprocessor(int previousStemsMax) {
+		this.previousStemsMax = previousStemsMax;
+	}
+
+	public AutocompleteStemmingPreprocessor() {
+		this(PREVIOUS_STEMS_MAX);
+	}
+
 	@Override
 	protected String compressString(Map<String, ?> context, int index, String string) {
+		if (index == 1082) {
+			// System.out.println(string);
+		}
+
 		// Escape by doubling
-		string = string.replaceAll("<", "<<").replaceAll(">", ">>");
+		// TODO Restrict this to `[^a-zA-Z]>\d`
+		string = string.replaceAll(">", ">>");
 
-		// AtomicLongMap<String> stemToCount = AtomicLongMap.create();
-
-		Matcher matcher = Pattern.compile("[a-zA-Z]{3,}").matcher(string);
-
-		// First pass: we detect the frequent stems
-		// {
-		// matcher.results().forEach(mr -> {
-		// String word = mr.group();
-		//
-		// String stem = stem(word);
-		// stemToCount.incrementAndGet(stem);
-		// });
-		// }
+		Matcher matcher = Pattern.compile("(?<![a-zA-Z>])[a-zA-Z]{3,}").matcher(string);
 
 		// LinkedList<String> previousWords = new LinkedList<>();
 		LinkedList<String> previousStems = new LinkedList<>();
@@ -67,13 +68,6 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 				return word;
 			}
 
-			// if (stemToCount.get(stem) <= 2) {
-			// // We have a nice stem, but it is barely used
-			// // registerPreviousWord(previousStems, word);
-			// return word;
-			// }
-
-			// int foundIndex = -1;
 			ListIterator<String> iterator = previousStems.listIterator(previousStems.size());
 
 			String reduced = "";
@@ -81,8 +75,6 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 			// Iterate backward for the next previous occurrence of the same word
 			while (iterator.hasPrevious()) {
 				String previousStem = iterator.previous();
-
-				// String previousStem = stem(previousWord);
 
 				if (stem.equals(previousStem)) {
 					int currentIndex = iterator.previousIndex() + 1;
@@ -98,6 +90,11 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 			registerPreviousWord(previousStems, stem);
 
 			if (reduced.isEmpty()) {
+
+				// if (word.equals("anarchist")) {
+				// System.out.println();
+				// }
+
 				return word;
 			} else {
 				return reduced;
@@ -114,6 +111,9 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 		} else if (!word.startsWith(stem)) {
 			// The rest of this algorithm assumes words starts by their stem
 
+			return false;
+		} else if (stem.length() <= 2) {
+			// It is pointless to replaced `uses used` by `used >0ed`
 			return false;
 		} else {
 			return true;
@@ -138,7 +138,7 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 
 	private void registerPreviousWord(LinkedList<String> previousWords, String word) {
 		// Update the sliding window of N words
-		if (previousWords.size() >= PREVIOUS_STEMS_MAX) {
+		if (previousWords.size() >= previousStemsMax) {
 			previousWords.removeFirst();
 		}
 		previousWords.add(word);
@@ -150,40 +150,42 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 
 		// Escape by doubling
 
-		String autocompleted = Pattern.compile("(>?>(\\d+)[a-zA-Z]+|[a-zA-Z]{3,})").matcher(string).replaceAll(mr -> {
-			String word = mr.group();
+		String autocompleted = Pattern.compile("((?<!>)>(\\d+)[a-zA-Z]+|(?<![>a-zA-Z])[a-zA-Z]{3,})")
+				.matcher(string)
+				.replaceAll(mr -> {
+					String word = mr.group();
 
-			if (word.startsWith(">>")) {
-				// This is an escaped autocomplete symbol
-				return word;
-			}
+					if (word.startsWith(">>")) {
+						// This is an escaped autocomplete symbol
+						return word;
+					}
 
-			// String completeWord = word;
+					// String completeWord = word;
 
-			String stem = "";
-			String autocompletedWord = word;
-			try {
-				if (!word.startsWith(">")) {
-					stem = stem(word);
-					return word;
-				}
+					String stem = "";
+					String autocompletedWord = word;
+					try {
+						if (!word.startsWith(">")) {
+							stem = stem(word);
+							return word;
+						}
 
-				String stemIndexAsString = mr.group(2);
-				int stemIndex = Integer.parseInt(stemIndexAsString);
+						String stemIndexAsString = mr.group(2);
+						int stemIndex = Integer.parseInt(stemIndexAsString);
 
-				stem = previousStems.get(previousStems.size() - stemIndex - 1);
+						stem = previousStems.get(previousStems.size() - stemIndex - 1);
 
-				autocompletedWord = stem + word.substring(">".length() + stemIndexAsString.length());
-				return autocompletedWord;
-			} finally {
-				// assert !stem.isEmpty();
-				if (isWorkableStem(autocompletedWord, stem)) {
-					registerPreviousWord(previousStems, stem);
-				}
-			}
-		});
+						autocompletedWord = stem + word.substring(">".length() + stemIndexAsString.length());
+						return autocompletedWord;
+					} finally {
+						// assert !stem.isEmpty();
+						if (isWorkableStem(autocompletedWord, stem)) {
+							registerPreviousWord(previousStems, stem);
+						}
+					}
+				});
 
-		return autocompleted.replaceAll("<<", "<").replaceAll(">>", ">");
+		return autocompleted.replaceAll(">>", ">");
 	}
 
 }

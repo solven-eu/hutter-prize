@@ -1,8 +1,6 @@
 package eu.solven.hutter_prize.recurrent_java.datasets;
 
-import java.io.File;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,21 +24,25 @@ import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TextGeneration extends DataSet {
 
-	public static int reportSequenceLength = 100;
-	public static boolean singleWordAutocorrect = false;
-	public static boolean reportPerplexity = true;
-	private static Map<String, Integer> charToIndex = new HashMap<>();
-	private static Map<Integer, String> indexToChar = new HashMap<>();
-	private static int dimension;
-	private static double[] vecStartEnd;
-	private static final int START_END_TOKEN_INDEX = 0;
-	private static Set<String> words = new HashSet<>();
+	public int reportSequenceLength = 100;
+	public boolean singleWordAutocorrect = false;
+	public boolean reportPerplexity = true;
+	private Map<String, Integer> charToIndex = new HashMap<>();
+	private Map<Integer, String> indexToChar = new HashMap<>();
+	private int dimension;
+	private double[] vecStartEnd;
+	private final int START_END_TOKEN_INDEX = 0;
+	private Set<String> words = new HashSet<>();
 
-	public static List<String> generateText(Model model, int steps, boolean argmax, double temperature, Random rng)
-			throws Exception {
+	public static List<String> generateText(TextGeneration tg,
+			Model model,
+			int steps,
+			boolean argmax,
+			double temperature,
+			Random rng) throws Exception {
 		List<String> lines = new ArrayList<>();
-		Matrix start = new Matrix(dimension);
-		start.w[START_END_TOKEN_INDEX] = 1.0;
+		Matrix start = new Matrix(tg.dimension);
+		start.w[tg.START_END_TOKEN_INDEX] = 1.0;
 		model.resetState();
 		Graph g = new Graph(false);
 		Matrix input = start.clone();
@@ -49,10 +51,10 @@ public class TextGeneration extends DataSet {
 			Matrix logprobs = model.forward(input, g);
 			Matrix probs = LossSoftmax.getSoftmaxProbs(logprobs, temperature);
 
-			if (singleWordAutocorrect) {
-				Matrix possible = Matrix.ones(dimension, 1);
+			if (tg.singleWordAutocorrect) {
+				Matrix possible = Matrix.ones(tg.dimension, 1);
 				try {
-					possible = singleWordAutocorrect(line);
+					possible = singleWordAutocorrect(tg, line);
 				} catch (Exception e) {
 					// TODO: still may be some lingering bugs, so don't constrain by possible if a problem occurs. Fix
 					// later..
@@ -88,7 +90,7 @@ public class TextGeneration extends DataSet {
 			} else {
 				indxChosen = Util.pickIndexFromRandomVector(probs, rng);
 			}
-			if (indxChosen == START_END_TOKEN_INDEX) {
+			if (indxChosen == tg.START_END_TOKEN_INDEX) {
 				lines.add(line);
 				line = "";
 				input = start.clone();
@@ -96,7 +98,7 @@ public class TextGeneration extends DataSet {
 				model.resetState();
 				input = start.clone();
 			} else {
-				String ch = indexToChar.get(indxChosen);
+				String ch = tg.indexToChar.get(indxChosen);
 				line += ch;
 				for (int i = 0; i < input.w.length; i++) {
 					input.w[i] = 0;
@@ -110,7 +112,7 @@ public class TextGeneration extends DataSet {
 		return lines;
 	}
 
-	private static Matrix singleWordAutocorrect(String sequence) throws Exception {
+	private static Matrix singleWordAutocorrect(TextGeneration tg, String sequence) throws Exception {
 
 		/*
 		 * This restricts the output of the RNN to being composed of words found in the source text. It makes no
@@ -119,7 +121,7 @@ public class TextGeneration extends DataSet {
 
 		sequence = sequence.replace("\"\n\"", " ");
 		if (sequence.equals("") || sequence.endsWith(" ")) { // anything is possible after a space
-			return Matrix.ones(dimension, 1);
+			return Matrix.ones(tg.dimension, 1);
 		}
 		String[] parts = sequence.split(" ");
 		String lastPartialWord = parts[parts.length - 1].trim();
@@ -127,7 +129,7 @@ public class TextGeneration extends DataSet {
 			throw new Exception("unexpected");
 		}
 		List<String> matches = new ArrayList<>();
-		for (String word : words) {
+		for (String word : tg.words) {
 			if (word.startsWith(lastPartialWord)) {
 				matches.add(word);
 			}
@@ -135,31 +137,31 @@ public class TextGeneration extends DataSet {
 		if (matches.size() == 0) {
 			throw new Exception("unexpected, no matches for '" + lastPartialWord + "'");
 		}
-		Matrix result = new Matrix(dimension);
+		Matrix result = new Matrix(tg.dimension);
 		boolean hit = false;
 		for (String match : matches) {
 			if (match.length() < lastPartialWord.length()) {
 				throw new Exception("How is match shorter than partial word?");
 			}
 			if (lastPartialWord.equals(match)) {
-				result.w[charToIndex.get(" ")] = 1.0;
-				result.w[START_END_TOKEN_INDEX] = 1.0;
+				result.w[tg.charToIndex.get(" ")] = 1.0;
+				result.w[tg.START_END_TOKEN_INDEX] = 1.0;
 				continue;
 			}
 
 			String nextChar = match.charAt(lastPartialWord.length()) + "";
-			result.w[charToIndex.get(nextChar)] = 1.0;
+			result.w[tg.charToIndex.get(nextChar)] = 1.0;
 			hit = true;
 		}
 		if (hit == false) {
-			result.w[charToIndex.get(" ")] = 1.0;
-			result.w[START_END_TOKEN_INDEX] = 1.0;
+			result.w[tg.charToIndex.get(" ")] = 1.0;
+			result.w[tg.START_END_TOKEN_INDEX] = 1.0;
 		}
 		return result;
 
 	}
 
-	public static String sequenceToSentence(DataSequence sequence) {
+	public static String sequenceToSentence(TextGeneration tg, DataSequence sequence) {
 		String result = "\"";
 		for (int s = 0; s < sequence.steps.size() - 1; s++) {
 			DataStep step = sequence.steps.get(s);
@@ -170,19 +172,22 @@ public class TextGeneration extends DataSet {
 					break;
 				}
 			}
-			String ch = indexToChar.get(index);
+			String ch = tg.indexToChar.get(index);
 			result += ch;
 		}
 		result += "\"\n";
 		return result;
 	}
 
-	public TextGeneration(String path) throws Exception {
-
+	public static TextGeneration fromPath(String path) throws Exception {
 		System.out.println("Text generation task");
 		System.out.println("loading " + path + "...");
 
 		String asString = PepperResourceHelper.loadAsString(path, Charset.defaultCharset());
+		return new TextGeneration(asString);
+	}
+
+	public TextGeneration(String asString) throws Exception {
 		List<String> lines = Arrays.asList(asString.split("[\r\n]"));
 		Set<String> chars = new HashSet<>();
 		int id = 0;
@@ -264,12 +269,12 @@ public class TextGeneration extends DataSet {
 		}
 		double[] temperatures = { 1, 0.75, 0.5, 0.25, 0.1 };
 		for (double temperature : temperatures) {
-			if (TextGeneration.singleWordAutocorrect) {
+			if (singleWordAutocorrect) {
 				System.out.println("\nTemperature " + temperature + " prediction (with single word autocorrect):");
 			} else {
 				System.out.println("\nTemperature " + temperature + " prediction:");
 			}
-			List<String> guess = TextGeneration.generateText(model, reportSequenceLength, false, temperature, rng);
+			List<String> guess = generateText(this, model, reportSequenceLength, false, temperature, rng);
 			for (int i = 0; i < guess.size(); i++) {
 				if (i == guess.size() - 1) {
 					System.out.println("\t\"" + guess.get(i) + "...\"");
@@ -279,12 +284,12 @@ public class TextGeneration extends DataSet {
 
 			}
 		}
-		if (TextGeneration.singleWordAutocorrect) {
+		if (singleWordAutocorrect) {
 			System.out.println("\nArgmax prediction (with single word autocorrect):");
 		} else {
 			System.out.println("\nArgmax prediction:");
 		}
-		List<String> guess = TextGeneration.generateText(model, reportSequenceLength, true, 1.0, rng);
+		List<String> guess = generateText(this, model, reportSequenceLength, true, 1.0, rng);
 		for (int i = 0; i < guess.size(); i++) {
 			if (i == guess.size() - 1) {
 				System.out.println("\t\"" + guess.get(i) + "...\"");

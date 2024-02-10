@@ -21,7 +21,7 @@ public class HPUtils {
 
 	// http://mattmahoney.net/dc/enwik8.zip
 	// http://mattmahoney.net/dc/enwik9.zip
-	final static Resource zipped = new FileSystemResource("/Users/blacelle/workspace3/enwik8.zip");
+	public static final Resource zipped = new FileSystemResource("/Users/blacelle/workspace3/enwik8.zip");
 
 	public static String nameAndSize(Object resource) {
 		if (resource instanceof FileSystemResource) {
