@@ -130,7 +130,7 @@ public class TestAutocompleteStemmingPreprocessor {
 		String page = "123<<ref>>456";
 		String compressed = (String) preProcessor.compress(page);
 
-		Assertions.assertThat(compressed).isEqualTo("123<<ref>>>>456");
+		Assertions.assertThat(compressed).isEqualTo("123<<ref>>>456");
 
 		{
 			String decompressed = preProcessor.decompress(compressed).toString();
@@ -143,7 +143,7 @@ public class TestAutocompleteStemmingPreprocessor {
 		String page = "Henry, <<br>>Henrique";
 		String compressed = (String) preProcessor.compress(page);
 
-		Assertions.assertThat(compressed).isEqualTo("Henry, <<br>>>>Henrique");
+		Assertions.assertThat(compressed).isEqualTo("Henry, <<br>>>Henrique");
 
 		{
 			String decompressed = preProcessor.decompress(compressed).toString();
@@ -170,7 +170,20 @@ public class TestAutocompleteStemmingPreprocessor {
 		String page = "Station >>Polar Stater sealer";
 		String compressed = (String) preProcessor.compress(page);
 
-		Assertions.assertThat(compressed).isEqualTo("Station >>>>Polar >0er sealer");
+		Assertions.assertThat(compressed).isEqualTo("Station >>>Polar >0er sealer");
+
+		{
+			String decompressed = preProcessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void test_stemPrefix() throws IOException {
+		String page = "both abridged and unabridged";
+		String compressed = (String) preProcessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("both abridged and unabridged");
 
 		{
 			String decompressed = preProcessor.decompress(compressed).toString();

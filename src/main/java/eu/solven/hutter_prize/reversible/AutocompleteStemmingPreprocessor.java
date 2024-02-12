@@ -52,7 +52,7 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 
 		// Escape by doubling
 		// TODO Restrict this to `[^a-zA-Z]>\d`
-		string = string.replaceAll(">", ">>");
+		string = string.replaceAll(">(?=\\w)", ">>");
 
 		Matcher matcher = Pattern.compile("(?<![a-zA-Z>])[a-zA-Z]{3,}").matcher(string);
 
@@ -185,7 +185,7 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 					}
 				});
 
-		return autocompleted.replaceAll(">>", ">");
+		return autocompleted.replaceAll(">>(?=\\w)", ">");
 	}
 
 }

@@ -47,7 +47,7 @@ public class TestAutocompleteWholeWordPreprocessor {
 		String compressedPage = compressed.get("body").toString();
 		Assertions.assertThat(compressedPage)
 				// .contains("'''g>'''").doesNotContain("'''Google'''")
-				.hasSize(24905);
+				.hasSize(24860);
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);
@@ -159,15 +159,15 @@ public class TestAutocompleteWholeWordPreprocessor {
 	}
 
 	@Test
-	public void test_Escape_Bopth() throws IOException {
-		String page = "1234<ref>5678";
+	public void test_Escape_Both() throws IOException {
+		String page = "ab<ref>cd";
 
 		IReversibleCompressor autocomplete =
-				new CompositeReversibleCompressor(Arrays.asList(preProcessor, new AutocompleteWholeWordPreprocessor()));
+				new CompositeReversibleCompressor(Arrays.asList(preProcessor, new AutocompleteStemmingPreprocessor()));
 
 		String compressed = (String) autocomplete.compress(page);
 
-		Assertions.assertThat(compressed).isEqualTo("1234<<<<ref>>>>5678");
+		Assertions.assertThat(compressed).isEqualTo("ab<<ref>>>cd");
 
 		{
 			String decompressed = autocomplete.decompress(compressed).toString();
@@ -175,12 +175,44 @@ public class TestAutocompleteWholeWordPreprocessor {
 		}
 	}
 
-	
+	@Test
+	public void test_Escape_Both_naked() throws IOException {
+		String page = "<ref>";
+
+		IReversibleCompressor autocomplete =
+				new CompositeReversibleCompressor(Arrays.asList(preProcessor, new AutocompleteStemmingPreprocessor()));
+
+		String compressed = (String) autocomplete.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("<<ref>>");
+
+		{
+			String decompressed = autocomplete.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void test_Escape_Both_noword() throws IOException {
+		String page = "ab<>cd";
+
+		IReversibleCompressor autocomplete =
+				new CompositeReversibleCompressor(Arrays.asList(preProcessor, new AutocompleteStemmingPreprocessor()));
+
+		String compressed = (String) autocomplete.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("ab<>>cd");
+
+		{
+			String decompressed = autocomplete.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
 
 	@Test
 	public void testEmpty() throws IOException {
-		IReversibleCompressor autocomplete = new CompositeReversibleCompressor(
-				Arrays.asList(preProcessor, new AutocompleteStemmingPreprocessor(999)));
+		IReversibleCompressor autocomplete =
+				new CompositeReversibleCompressor(Arrays.asList(preProcessor, new AutocompleteStemmingPreprocessor()));
 
 		String page = PepperResourceHelper.loadAsString("/pages/empty");
 

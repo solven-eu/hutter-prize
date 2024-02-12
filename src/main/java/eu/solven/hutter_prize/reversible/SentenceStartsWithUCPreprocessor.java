@@ -1,6 +1,5 @@
 package eu.solven.hutter_prize.reversible;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -15,9 +14,13 @@ import com.google.common.util.concurrent.AtomicLongMap;
  *
  */
 public class SentenceStartsWithUCPreprocessor extends ASymbolsPreprocessor {
+	// This is compatible with the normal word regex
+	private static final String MAGIC_SUFFIX = "FLC";
+
+	// `\v` catches any vertical newLine
 	private AtomicLongMap<String> getProperNounToCount(String string) {
 		AtomicLongMap<String> properNounToCount = AtomicLongMap.create();
-		Pattern.compile("(?<![\\n\\.] |\n|^)[A-Z][a-z]*")
+		Pattern.compile("(?<=(?:[a-zA-Z] ))[A-Z][a-zA-Z]*")
 				.matcher(string)
 				.results()
 				.forEach(mr -> properNounToCount.incrementAndGet(mr.group()));
@@ -29,21 +32,37 @@ public class SentenceStartsWithUCPreprocessor extends ASymbolsPreprocessor {
 		// Pattern.compile("[a-zA-Z]+").matcher(string).results().forEach(mr ->
 		// wordToCount.incrementAndGet(mr.group()));
 
+		// if (string.contains("Asperger")) {
+		// System.out.println(string);
+		// }
+
 		// A proper noun starts with upperCase without being start of sentence
 		AtomicLongMap<String> properNounToCount = getProperNounToCount(string);
 
-		String replaced = Pattern.compile("(?<=([\n\\.] )|\n|^)[A-Z][a-zA-Z]*").matcher(string).replaceAll(mr -> {
+		String replaced = Pattern.compile("(?<=(\\. )|\\v ?|^)[a-zA-Z]+").matcher(string).replaceAll(mr -> {
 			String firstWord = mr.group();
 
 			if (properNounToCount.containsKey(firstWord)) {
 				return firstWord;
 			} else {
 
-				if (firstWord.startsWith("image")) {
-					// System.out.println();
+				if (firstWord.endsWith(MAGIC_SUFFIX)) {
+					throw new IllegalArgumentException("TODO Escape words with improper case and ending with `LC`");
 				}
 
-				return Character.toString(Character.toLowerCase(firstWord.codePointAt(0))) + firstWord.substring(1);
+				int firstCodepoint = firstWord.codePointAt(0);
+
+				if (Character.isUpperCase(firstCodepoint)) {
+					return Character.toString(Character.toLowerCase(firstCodepoint)) + firstWord.substring(1);
+				}
+
+				// if (firstWord.startsWith("image")) {
+				// // System.out.println();
+				// }
+
+				// We expected an upperCase but it is not the case: we need to escape this exception
+				return firstWord + MAGIC_SUFFIX;
+
 			}
 		});
 
@@ -53,17 +72,36 @@ public class SentenceStartsWithUCPreprocessor extends ASymbolsPreprocessor {
 	protected String decompressString(Map<String, ?> context, int index, String string) {
 		AtomicLongMap<String> properNounToCount = getProperNounToCount(string);
 
-		String replaced = Pattern.compile("(?<=([\n\\.] )|\n|^)[a-z][a-zA-Z]*").matcher(string).replaceAll(mr -> {
+		// if (string.contains("Asperger")) {
+		// System.out.println();
+		// }
+
+		String replaced = Pattern.compile("(?<=(\\. )|\\v ?|^)[a-zA-Z]+").matcher(string).replaceAll(mr -> {
 			String firstWord = mr.group();
 
 			if (properNounToCount.containsKey(firstWord)) {
+
+				// if (firstWord.startsWith("imageLC")) {
+				// System.out.println();
+				// }
 				return firstWord;
 			} else {
-				if (firstWord.startsWith("image")) {
-					System.out.println();
+				int firstCodepoint = firstWord.codePointAt(0);
+
+				// if (firstWord.startsWith("image")) {
+				// System.out.println();
+				// }
+
+				if (Character.isUpperCase(firstCodepoint)) {
+					// BEWARE Is this a bug?
+					return firstWord;
 				}
 
-				return Character.toString(Character.toUpperCase(firstWord.codePointAt(0))) + firstWord.substring(1);
+				if (!firstWord.endsWith(MAGIC_SUFFIX)) {
+					return Character.toString(Character.toUpperCase(firstCodepoint)) + firstWord.substring(1);
+				}
+
+				return firstWord.substring(0, firstWord.length() - MAGIC_SUFFIX.length());
 			}
 		});
 

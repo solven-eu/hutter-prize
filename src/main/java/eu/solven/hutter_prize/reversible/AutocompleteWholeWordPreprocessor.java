@@ -50,7 +50,7 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 		}
 
 		// Escape by doubling
-		String escaped = string.replaceAll("<", "<<").replaceAll(">", ">>");
+		String escaped = string.replaceAll("<(?=\\w)", "<<").replaceAll("(?<=\\w)>", ">>");
 
 		LinkedList<String> previousWords = new LinkedList<>();
 		// https://stackoverflow.com/questions/899422/regular-expression-for-a-string-that-does-not-start-with-a-sequence
@@ -244,7 +244,7 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 					}
 				});
 
-		String unescaped = autocompleted.replaceAll("<<", "<").replaceAll(">>", ">");
+		String unescaped = autocompleted.replaceAll("<<(?=\\w)", "<").replaceAll("(?<=\\w)>>", ">");
 		return unescaped;
 	}
 

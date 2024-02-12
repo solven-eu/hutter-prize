@@ -8,7 +8,9 @@ package eu.solven.hutter_prize.reversible;
  */
 public class ImageRefPreprocessor extends PatternExtractorPreprocessor {
 	public ImageRefPreprocessor() {
-		super("image_\\d+_", "\\[\\[Image:", "\\]\\]", "imageRefs");
+		super(
+				// UpperCase to prevent interactions with SentenceStartsWithUCPreprocessor
+				 "Image_\\d+_", "\\[\\[Image:", "\\]\\]", "imageRefs");
 	}
 
 }

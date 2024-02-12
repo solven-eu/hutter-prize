@@ -13,8 +13,8 @@ import org.springframework.core.io.Resource;
 import eu.solven.hutter_prize.IReversibleCompressor;
 
 /**
- * This would not compress, but it would make it easier to compress. It is some sort of facilitating preprocessor, like
- * Burrows-Wheeler.
+ * This decompresses an input ZIP. It makes the current state bigger, but easier to later compress. It is some sort of
+ * facilitating preprocessor, like Burrows-Wheeler.
  * 
  * @author Benoit Lacelle
  *
