@@ -6,11 +6,11 @@ import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import eu.solven.hutter_prize.reversible.TablePreprocessor;
+import eu.solven.hutter_prize.reversible.TableMarkdownPreprocessor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TestTablePreprocessor {
-	final TablePreprocessor preProcessor = new TablePreprocessor();
+	final TableMarkdownPreprocessor preProcessor = new TableMarkdownPreprocessor();
 
 	@Test
 	public void testGoogol() throws IOException {

@@ -25,7 +25,7 @@ public class TestAutocompleteWholeWordPreprocessor {
 		Assertions.assertThat(compressed).containsKeys("body");
 
 		String compressedPage = compressed.get("body").toString();
-		Assertions.assertThat(compressedPage).contains("'''g>'''").doesNotContain("'''Google'''").hasSize(4966);
+		Assertions.assertThat(compressedPage).contains("'''g>'''").doesNotContain("'''Google'''").hasSize(5002);
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);
@@ -47,7 +47,7 @@ public class TestAutocompleteWholeWordPreprocessor {
 		String compressedPage = compressed.get("body").toString();
 		Assertions.assertThat(compressedPage)
 				// .contains("'''g>'''").doesNotContain("'''Google'''")
-				.hasSize(24860);
+				.hasSize(24761);
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);
@@ -89,6 +89,19 @@ public class TestAutocompleteWholeWordPreprocessor {
 		String compressed = (String) preProcessor.compress(page);
 
 		Assertions.assertThat(compressed).isEqualTo("the that large the");
+
+		{
+			String decompressed = preProcessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void test_accent() throws IOException {
+		String page = "prénom prénom";
+		String compressed = (String) preProcessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("prénom p>");
 
 		{
 			String decompressed = preProcessor.decompress(compressed).toString();

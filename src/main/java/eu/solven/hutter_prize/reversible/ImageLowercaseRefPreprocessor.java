@@ -10,7 +10,7 @@ public class ImageLowercaseRefPreprocessor extends PatternExtractorPreprocessor 
 	public ImageLowercaseRefPreprocessor() {
 		super(
 				// UpperCase to prevent interactions with SentenceStartsWithUCPreprocessor
-				"ImageLC_\\d+_",
+				"ImgLC\\d+_",
 				"\\[\\[image:",
 				"\\]\\]",
 				"imageLCRefs");

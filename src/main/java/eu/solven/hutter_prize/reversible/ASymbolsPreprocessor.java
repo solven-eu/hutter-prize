@@ -104,8 +104,13 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, "keyToVector");
 				Map<String, Object> keyToVectorOutput = new LinkedHashMap<>(keyToVector);
 
-				Map<String, Object> keyToContext =
-						compressing ? new TreeMap<>() : PepperMapHelper.getRequiredAs(asMap, contextKey);
+				Map<String, Object> keyToContext;
+				if (compressing) {
+					keyToContext = new TreeMap<>();
+				} else {
+					keyToContext =
+							PepperMapHelper.<Map<String, Object>>getOptionalAs(asMap, contextKey).orElse(Map.of());
+				}
 
 				if (keyToVector.containsKey("text")) {
 					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, "text");
@@ -139,7 +144,11 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 				decompressed.put("keyToVector", keyToVectorOutput);
 
 				if (compressing) {
-					decompressed.put(contextKey, keyToContext);
+					if (!keyToContext.isEmpty()) {
+						decompressed.put(contextKey, keyToContext);
+					}
+				} else {
+					decompressed.remove(contextKey);
 				}
 
 				return decompressed;

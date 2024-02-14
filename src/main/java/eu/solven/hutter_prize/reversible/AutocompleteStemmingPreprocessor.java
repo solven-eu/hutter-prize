@@ -29,7 +29,7 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 
 	// Given we look for repeating words, there is no need to look at the whole context: a relevant word would repeat
 	// itself, and keep present at any position on the List of previous words
-	private static final int PREVIOUS_STEMS_MAX = 64;
+	private static final int PREVIOUS_STEMS_MAX = Integer.MAX_VALUE;
 
 	private int previousStemsMax;
 
@@ -137,9 +137,15 @@ public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
 	}
 
 	private void registerPreviousWord(LinkedList<String> previousWords, String word) {
-		// Update the sliding window of N words
-		if (previousWords.size() >= previousStemsMax) {
-			previousWords.removeFirst();
+		boolean removed = previousWords.remove(word);
+
+		if (removed) {
+			// We push forward this stem
+		} else {
+			// Update the sliding window of N words
+			if (previousWords.size() >= previousStemsMax) {
+				previousWords.removeFirst();
+			}
 		}
 		previousWords.add(word);
 	}

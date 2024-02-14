@@ -53,11 +53,12 @@ public class HPUtils {
 			}
 
 		} else if (resource instanceof Map<?, ?>) {
-			Map<?, ?> string = (Map<?, ?>) resource;
+			Map<String, ?> string = (Map<String, ?>) resource;
 			return "Map.length()=" + string.size()
 					+ " "
 					+ string.entrySet()
 							.stream()
+							.sorted(Map.Entry.comparingByKey())
 							.map(e -> e.getKey() + " -> " + PepperLogHelper.humanBytes(size(e.getValue())))
 							.collect(Collectors.joining(" "));
 		} else {

@@ -81,8 +81,8 @@ public class PersistingCompressor implements IReversibleCompressor {
 
 				consume.accept(outputPath, asString.getBytes(StandardCharsets.UTF_8));
 			} else if (v instanceof Collection<?>) {
-				Collection<?> intList = (Collection<?>) v;
-				persistCollection(k, outputPath, intList, consume);
+				Collection<?> c = (Collection<?>) v;
+				persistCollection(k, outputPath, c, consume);
 			} else if (v instanceof Map<?, ?>) {
 				Map<String, Object> vAsMap = (Map<String, Object>) v;
 
@@ -94,7 +94,6 @@ public class PersistingCompressor implements IReversibleCompressor {
 				} else {
 					persistMap(outputPath, vAsMap, consume);
 				}
-
 			} else {
 				// We log `parentFolder` to have access to parent keys
 				LOGGER.warn("Not managed: {} {} given {}", k, v.getClass().getSimpleName(), parentFolder);
@@ -103,7 +102,7 @@ public class PersistingCompressor implements IReversibleCompressor {
 	}
 
 	private void persistCollection(String k, Path outputPath, Collection<?> intList, BiConsumer<Path, byte[]> consume) {
-		String asString = intList.stream().map(String::valueOf).collect(Collectors.joining("\r\n"));
+		String asString = intList.stream().map(String::valueOf).collect(Collectors.joining("\n---------\n"));
 
 		consume.accept(outputPath, asString.getBytes(StandardCharsets.UTF_8));
 	}

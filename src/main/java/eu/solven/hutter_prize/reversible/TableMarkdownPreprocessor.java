@@ -7,10 +7,10 @@ package eu.solven.hutter_prize.reversible;
  * @author Benoit Lacelle
  *
  */
-public class TablePreprocessor extends PatternExtractorPreprocessor {
+public class TableMarkdownPreprocessor extends PatternExtractorPreprocessor {
 
-	public TablePreprocessor() {
-		super("\\{table\\d+_", "\\{\\| ", "\n\\|\\}", "tables");
+	public TableMarkdownPreprocessor() {
+		super("\\{tmd\\d+_", "\\{\\|", "\n\\|\\}", "tables_markdown");
 	}
 
 }

@@ -30,7 +30,7 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 
 	// Given we look for repeteting words, there is no need to look at the whole context: a relevant word would repeat
 	// itself, and keep present at any position on the List of previous words
-	private static final int PREVIOUS_WORDS_MAX = 128;
+	private static final int PREVIOUS_WORDS_MAX = 1024;
 
 	private final int previousWordMax;
 
@@ -50,96 +50,100 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 		}
 
 		// Escape by doubling
-		String escaped = string.replaceAll("<(?=\\w)", "<<").replaceAll("(?<=\\w)>", ">>");
+		String escaped = string.replaceAll("<(?=\\p{IsLatin})", "<<").replaceAll("(?<=\\p{IsLatin})>", ">>");
 
 		LinkedList<String> previousWords = new LinkedList<>();
 		// https://stackoverflow.com/questions/899422/regular-expression-for-a-string-that-does-not-start-with-a-sequence
 		// We have issues with negative look-behind as it correctly rejects `<<some`, but it accepts `<some`
-		String compressed = Pattern.compile("(?<![\\w<]{2})\\w{3,}(?![\\w>]{2})").matcher(escaped).replaceAll(mr -> {
-			String word = mr.group();
+		String compressed = Pattern.compile("(?<![\\p{IsLatin}<]{2})\\p{IsLatin}{3,}(?![\\p{IsLatin}>]{2})")
+				.matcher(escaped)
+				.replaceAll(mr -> {
+					String word = mr.group();
 
-			// if (DEBUG && word.equals("com")) {
-			// System.out.println();
-			// }
+					// if (DEBUG && word.equals("com")) {
+					// System.out.println();
+					// }
 
-			int foundIndex = -1;
-			ListIterator<String> iterator = previousWords.listIterator(previousWords.size());
+					// TODO Use a Trie https://commons.apache.org/proper/commons-collections/apidocs/org/apache/commons/collections4/Trie.html
+					int foundIndex = -1;
+					ListIterator<String> iterator = previousWords.listIterator(previousWords.size());
 
-			// Iterate backward for the next previous occurrence of the same word
-			while (iterator.hasPrevious()) {
-				String previousWord = iterator.previous();
+					// Iterate backward for the next previous occurrence of the same word
+					while (iterator.hasPrevious()) {
+						String previousWord = iterator.previous();
 
-				if (previousWord.equals(word)) {
-					foundIndex = iterator.previousIndex() + 1;
-					break;
-				}
-				// continue looking for the same word in previous context
-			}
-
-			String reduced = "";
-			if (foundIndex >= 0) {
-				// WHile we switch from backward to forward, we need to skip current item
-				assert iterator.nextIndex() == foundIndex;
-				iterator.next();
-
-				int intermediateCommonPrefixLength = 0;
-				int intermediateCommonSuffixLength = 0;
-
-				// Iterate forward in order to know what is the required prefix to find the same word in the previous
-				// words
-				while (iterator.hasNext()) {
-					String intermediateWord = iterator.next();
-
-					String commonPrefix = Strings.commonPrefix(word, intermediateWord);
-
-					if (commonPrefix.length() >= 1) {
-						intermediateCommonPrefixLength =
-								Math.max(intermediateCommonPrefixLength, commonPrefix.length());
-						// reduced = commonPrefix.length() + ">";
-						// break;
+						if (previousWord.equals(word)) {
+							foundIndex = iterator.previousIndex() + 1;
+							break;
+						}
+						// continue looking for the same word in previous context
 					}
 
-					String commonSuffix = Strings.commonSuffix(word, intermediateWord);
+					String reduced = "";
+					if (foundIndex >= 0) {
+						// WHile we switch from backward to forward, we need to skip current item
+						assert iterator.nextIndex() == foundIndex;
+						iterator.next();
 
-					if (commonSuffix.length() >= 1) {
-						intermediateCommonSuffixLength =
-								Math.max(intermediateCommonSuffixLength, commonSuffix.length());
-						// reduced = "<" + commonSuffix.length();
-						// break;
+						int intermediateCommonPrefixLength = 0;
+						int intermediateCommonSuffixLength = 0;
+
+						// Iterate forward in order to know what is the required prefix to find the same word in the
+						// previous
+						// words
+						while (iterator.hasNext()) {
+							String intermediateWord = iterator.next();
+
+							String commonPrefix = Strings.commonPrefix(word, intermediateWord);
+
+							if (commonPrefix.length() >= 1) {
+								intermediateCommonPrefixLength =
+										Math.max(intermediateCommonPrefixLength, commonPrefix.length());
+								// reduced = commonPrefix.length() + ">";
+								// break;
+							}
+
+							String commonSuffix = Strings.commonSuffix(word, intermediateWord);
+
+							if (commonSuffix.length() >= 1) {
+								intermediateCommonSuffixLength =
+										Math.max(intermediateCommonSuffixLength, commonSuffix.length());
+								// reduced = "<" + commonSuffix.length();
+								// break;
+							}
+
+							int keptLength = keptLength(intermediateCommonPrefixLength, intermediateCommonSuffixLength);
+							if (!isUseful(word, keptLength)) {
+								// We have at best 1 char spared: it is pointless as we will ose 1 char in `>` or `<`
+								break;
+							}
+						}
+
+						int keptLength = keptLength(intermediateCommonPrefixLength, intermediateCommonSuffixLength);
+
+						if (isUseful(word, keptLength)) {
+
+							if (intermediateCommonPrefixLength > intermediateCommonSuffixLength) {
+								// We prefer autocompleting by suffix
+								reduced = "<" + word.substring(word.length() - keptLength, word.length());
+							} else {
+								reduced = word.substring(0, keptLength) + ">";
+							}
+						}
 					}
 
-					int keptLength = keptLength(intermediateCommonPrefixLength, intermediateCommonSuffixLength);
-					if (!isUseful(word, keptLength)) {
-						// We have at best 1 char spared: it is pointless as we will ose 1 char in `>` or `<`
-						break;
+					if (DEBUG && !reduced.isEmpty()) {
+						// System.out.println(reduced + " given " + previousWords);
 					}
-				}
 
-				int keptLength = keptLength(intermediateCommonPrefixLength, intermediateCommonSuffixLength);
+					registerPreviousWord(previousWords, word);
 
-				if (isUseful(word, keptLength)) {
-
-					if (intermediateCommonPrefixLength > intermediateCommonSuffixLength) {
-						// We prefer autocompleting by suffix
-						reduced = "<" + word.substring(word.length() - keptLength, word.length());
+					if (reduced.isEmpty()) {
+						return word;
 					} else {
-						reduced = word.substring(0, keptLength) + ">";
+						return reduced;
 					}
-				}
-			}
-
-			if (DEBUG && !reduced.isEmpty()) {
-				// System.out.println(reduced + " given " + previousWords);
-			}
-
-			registerPreviousWord(previousWords, word);
-
-			if (reduced.isEmpty()) {
-				return word;
-			} else {
-				return reduced;
-			}
-		});
+				});
 
 		if (DEBUG) {
 			assert decompressString(context, index, compressed).equals(string);
@@ -165,10 +169,17 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 	}
 
 	private void registerPreviousWord(LinkedList<String> previousWords, String word) {
-		// Update the sliding window of N words
-		if (previousWords.size() >= previousWordMax) {
-			previousWords.removeFirst();
+		boolean removed = previousWords.remove(word);
+
+		if (removed) {
+			// It is moved forward
+		} else {
+			// Update the sliding window of N words
+			if (previousWords.size() >= previousWordMax) {
+				previousWords.removeFirst();
+			}
 		}
+
 		previousWords.add(word);
 	}
 
@@ -178,7 +189,8 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 
 		// The 3rd block wants to catch simple words: we have to ensure it does not catch `word` in `word>>`, so we
 		// forbid both `\w` and `>` in the lookahead|behinds
-		String autocompleted = Pattern.compile("((?<!<)<\\w+|\\w+>(?!>)|(?<![<\\w])\\w{3,}(?![>\\w]))")
+		String autocompleted = Pattern.compile(
+				"((?<!<)<\\p{IsLatin}+|\\p{IsLatin}+>(?!>)|(?<![<\\p{IsLatin}])\\p{IsLatin}{3,}(?![>\\p{IsLatin}]))")
 				.matcher(string)
 				.replaceAll(mr -> {
 					String word = mr.group();
@@ -244,7 +256,7 @@ public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
 					}
 				});
 
-		String unescaped = autocompleted.replaceAll("<<(?=\\w)", "<").replaceAll("(?<=\\w)>>", ">");
+		String unescaped = autocompleted.replaceAll("<<(?=\\p{IsLatin})", "<").replaceAll("(?<=\\p{IsLatin})>>", ">");
 		return unescaped;
 	}
 

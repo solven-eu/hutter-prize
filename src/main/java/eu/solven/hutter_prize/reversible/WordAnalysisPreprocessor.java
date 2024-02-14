@@ -35,15 +35,17 @@ public class WordAnalysisPreprocessor extends ASymbolsPreprocessor {
 			if (rawInput instanceof String) {
 				String rawAsString = rawInput.toString();
 
-				Pattern.compile("\\w+").matcher(rawAsString).results().forEach(mr -> {
-					String word = mr.group().toLowerCase(Locale.US);
-
-					if (1 == pageWordCount.incrementAndGet(word)) {
-						// Count given word only on its first encounter in given page
-						wordPageCount.incrementAndGet(word);
-					}
-					wordCount.incrementAndGet(word);
-				});
+				Pattern.compile("\\w+")
+						.matcher(rawAsString)
+						.results()
+						.map(mr -> mr.group().toLowerCase(Locale.US))
+						.forEach(word -> {
+							if (1 == pageWordCount.incrementAndGet(word)) {
+								// Count given word only on its first encounter in given page
+								wordPageCount.incrementAndGet(word);
+							}
+							wordCount.incrementAndGet(word);
+						});
 			}
 		}
 

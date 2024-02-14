@@ -7,10 +7,12 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.solven.hutter_prize.reversible.AlphabetManyPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteStemmingPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteWholeWordPreprocessor;
+import eu.solven.hutter_prize.reversible.CharacterAnalysisPreprocessor;
+import eu.solven.hutter_prize.reversible.CharacterEncodingPreprocessor;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
-import eu.solven.hutter_prize.reversible.CompressColumns;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.ImageRefPreprocessor;
@@ -18,13 +20,17 @@ import eu.solven.hutter_prize.reversible.MathPreprocessor;
 import eu.solven.hutter_prize.reversible.PersistingCompressor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
-import eu.solven.hutter_prize.reversible.SomeAlphabetPreprocessor;
-import eu.solven.hutter_prize.reversible.TablePreprocessor;
+import eu.solven.hutter_prize.reversible.SkipClosingBrackets;
+import eu.solven.hutter_prize.reversible.TableHtmlPreprocessor;
+import eu.solven.hutter_prize.reversible.TableMarkdownPreprocessor;
 import eu.solven.hutter_prize.reversible.UrlPreprocessor;
+import eu.solven.hutter_prize.reversible.WordAnalysisPreprocessor;
 import eu.solven.hutter_prize.reversible.ZipToByteArray;
 
 public class HPCompressAndDecompress {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HPCompressAndDecompress.class);
+
+	private static boolean DEBUG = false;
 
 	static final IReversibleCompressor compressor = new CompositeReversibleCompressor(Arrays.asList(
 			// new ZipToByteArray(),
@@ -34,38 +40,68 @@ public class HPCompressAndDecompress {
 			new UrlPreprocessor(),
 			new ImageRefPreprocessor(),
 			new ImageLowercaseRefPreprocessor(),
-			new TablePreprocessor(),
 
-			new SomeAlphabetPreprocessor("ko"),
-			new SomeAlphabetPreprocessor("ja"),
-			new SomeAlphabetPreprocessor("zh"),
-			new SomeAlphabetPreprocessor("zh-min-nan"),
-			new SomeAlphabetPreprocessor("ar"),
-			new SomeAlphabetPreprocessor("ru"),
-			new SomeAlphabetPreprocessor("uk"),
-			new SomeAlphabetPreprocessor("el"),
-			new SomeAlphabetPreprocessor("bg"),
-			new SomeAlphabetPreprocessor("bn"),
-			new SomeAlphabetPreprocessor("he"),
-			new SomeAlphabetPreprocessor("os"),
-			new SomeAlphabetPreprocessor("fa"),
-			new SomeAlphabetPreprocessor("hi"),
-			new SomeAlphabetPreprocessor("th"),
-			new SomeAlphabetPreprocessor("mk"),
-			new SomeAlphabetPreprocessor("ka"),
-			new SomeAlphabetPreprocessor("sa"),
-			new SomeAlphabetPreprocessor("yi"),
-			new SomeAlphabetPreprocessor("ta"),
-			new SomeAlphabetPreprocessor("gu"),
-			new SomeAlphabetPreprocessor("sr"),
-			new SomeAlphabetPreprocessor("vi"),
-			new SomeAlphabetPreprocessor("tr"),
+			new TableMarkdownPreprocessor(),
+			new TableHtmlPreprocessor(),
+
+			// new AlphabetSomePreprocessor("ko"),
+			// new AlphabetSomePreprocessor("ja"),
+			// new AlphabetSomePreprocessor("zh"),
+			// new AlphabetSomePreprocessor("zh-min-nan"),
+			// new AlphabetSomePreprocessor("ar"),
+			// new AlphabetSomePreprocessor("ru"),
+			// new AlphabetSomePreprocessor("uk"),
+			// new AlphabetSomePreprocessor("el"),
+			// new AlphabetSomePreprocessor("bg"),
+			// new AlphabetSomePreprocessor("bn"),
+			// new AlphabetSomePreprocessor("he"),
+			// new AlphabetSomePreprocessor("os"),
+			// new AlphabetSomePreprocessor("fa"),
+			// new AlphabetSomePreprocessor("hi"),
+			// new AlphabetSomePreprocessor("th"),
+			// new AlphabetSomePreprocessor("mk"),
+			// new AlphabetSomePreprocessor("ka"),
+			// new AlphabetSomePreprocessor("sa"),
+			// new AlphabetSomePreprocessor("yi"),
+			// new AlphabetSomePreprocessor("ta"),
+			// new AlphabetSomePreprocessor("gu"),
+			// new AlphabetSomePreprocessor("sr"),
+			// new AlphabetSomePreprocessor("vi"),
+			// new AlphabetSomePreprocessor("tr"),
+
+			// We replace many individual `AlphabetSomePreprocessor` by a single AlphabetManyPreprocessor. It is faster
+			// (as single pass) and it impacts the text vector just the same. The output file is different as it would
+			// mix all languages: it is acceptable as long as we do not compress the otherAlphabet file.
+			new AlphabetManyPreprocessor("ko",
+					"ja",
+					"zh",
+					"zh-min-nan",
+					"ar",
+					"ru",
+					"uk",
+					"el",
+					"bg",
+					"bn",
+					"he",
+					"os",
+					"fa",
+					"hi",
+					"th",
+					"mk",
+					"ka",
+					"sa",
+					"yi",
+					"ta",
+					"gu",
+					"sr",
+					"vi",
+					"tr"),
+
+			// After alphabets as they rely on the `[[al:Youpi]]` syntax
+			new SkipClosingBrackets(),
 
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
 			new ColumnRepresentation(),
-
-			// new WordAnalysisPreprocessor(),
-			// new LexicalFieldPreprocessor(),
 
 			// Phd9 may be commented as it makes files less human-readable, which is painful during development phase
 			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
@@ -75,17 +111,24 @@ public class HPCompressAndDecompress {
 			new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
+			new WordAnalysisPreprocessor(),
+			new CharacterAnalysisPreprocessor(),
+			// new LexicalFieldPreprocessor(),
+
 			// This will turn `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
 			new SentenceStartsWithUCPreprocessor(),
 			// This would escape `<` into `<<`
 			// This would escape `>` into `>>`
-			new AutocompleteWholeWordPreprocessor(),
+			new AutocompleteWholeWordPreprocessor(128),
 			// This would escape `>\w` into `>>\w`
 			new AutocompleteStemmingPreprocessor(),
 
-			new CompressColumns(),
+			// new CharacterEncodingPreprocessor(),
+			// new BWTPreprocessor(),
 
-			new PersistingCompressor()));
+			// new CompressColumns(),
+
+			new PersistingCompressor()), DEBUG);
 
 	public static void main(String[] args) throws IOException {
 		IReversibleCompressor compressors = HPCompressAndDecompress.compressor;
