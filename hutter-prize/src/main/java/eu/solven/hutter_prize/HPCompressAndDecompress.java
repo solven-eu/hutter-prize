@@ -136,19 +136,21 @@ public class HPCompressAndDecompress {
 		Object initialInput = HPUtils.zipped;
 
 		// We remove the initial ZIP impact from the analysis
-		Object initialInputPreProcesses = new ZipToByteArray().compress(initialInput);
+		byte[] original = (byte[]) new ZipToByteArray().compress(initialInput);
 
-		Object compressed = compressors.compress(initialInputPreProcesses);
-		LOGGER.info("{} compressed into {}",
-				HPUtils.nameAndSize(initialInputPreProcesses),
-				HPUtils.nameAndSize(compressed));
+		Object compressed = compressors.compress(original);
+		LOGGER.info("{} compressed into {}", HPUtils.nameAndSize(original), HPUtils.nameAndSize(compressed));
 
-		Object decompressed = compressors.decompress(compressed);
+		byte[] decompressed = (byte[]) compressors.decompress(compressed);
 		LOGGER.info("{} decompressed from {}", HPUtils.nameAndSize(decompressed), HPUtils.nameAndSize(compressed));
 
+		sanityChecks(original, decompressed);
+	}
+
+	public static void sanityChecks(byte[] original, byte[] decompressed) {
 		boolean koMiddle = false;
-		String before = new String((byte[]) initialInputPreProcesses, StandardCharsets.UTF_8);
-		String after = new String((byte[]) decompressed, StandardCharsets.UTF_8);
+		String before = new String(original, StandardCharsets.UTF_8);
+		String after = new String(decompressed, StandardCharsets.UTF_8);
 		for (int i = 0; i < before.length(); i++) {
 			if (i > after.length()) {
 				koMiddle = true;

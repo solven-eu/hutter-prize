@@ -1,5 +1,6 @@
 package eu.solven.hutter_prize;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,10 @@ public class HPUtils {
 			return "byte[].length=" + PepperLogHelper.humanBytes(size(resource));
 		} else if (resource instanceof char[]) {
 			return "char[].length=" + PepperLogHelper.humanBytes(size(resource));
+		} else if (resource instanceof ByteArrayOutputStream) {
+			return nameAndSize(((ByteArrayOutputStream) resource).toByteArray());
+		} else if (resource instanceof byte[]) {
+			return "byte[].length=" + PepperLogHelper.humanBytes(size(resource));
 		} else if (resource instanceof String) {
 			String string = (String) resource;
 			return "String.length()=" + string.length() + " " + PepperLogHelper.humanBytes(size(resource));
@@ -78,6 +83,8 @@ public class HPUtils {
 			return ((byte[]) resource).length;
 		} else if (resource instanceof char[]) {
 			return 4 * ((char[]) resource).length;
+		} else if (resource instanceof ByteArrayOutputStream) {
+			return size(((ByteArrayOutputStream) resource).toByteArray());
 		} else if (resource instanceof String) {
 			String string = (String) resource;
 			return size(string.getBytes(StandardCharsets.UTF_8));
