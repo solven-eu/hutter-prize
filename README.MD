@@ -46,3 +46,17 @@ The submitted order of articles can be found at: https://github.com/amargaritov/
 
 ## New ideas
 
+# External Libraries
+
+## Kanzi
+
+Kanzi provides many high-performance compression algorithms. However, it is not available through maven repositories. So we integrate it as a git submodule:
+
+### Used to initially setup this repository
+- `git submodule add https://github.com/flanglet/kanzi`
+
+### How to clone this repository
+
+```
+   git --recurse-submodules clone <this>
+```
