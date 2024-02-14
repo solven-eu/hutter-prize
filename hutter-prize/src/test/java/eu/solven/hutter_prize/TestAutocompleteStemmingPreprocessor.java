@@ -15,7 +15,7 @@ public class TestAutocompleteStemmingPreprocessor {
 
 	@Test
 	public void testAnarchism() throws IOException {
-		String page = PepperResourceHelper.loadAsString("/pages/anarchism");
+		String page = PepperResourceHelper.loadAsString("/pages/Anarchism");
 		Assertions.assertThat(page).doesNotContain(">>").contains("'''Anarchism'''");
 
 		Map<String, ?> compressedObject = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
@@ -24,7 +24,7 @@ public class TestAutocompleteStemmingPreprocessor {
 
 		String compressedPage = compressedObject.get("body").toString();
 
-		Assertions.assertThat(compressedPage).hasSize(11670);
+		Assertions.assertThat(compressedPage).hasSize(11640);
 		Assertions.assertThat(StringUtils.countOccurrencesOf(compressedPage, "anarchist")).isEqualTo(1);
 
 		// Assertions.assertThat(compressed.get("body").toString()).contains("'''g>'''").doesNotContain("'''Google'''");

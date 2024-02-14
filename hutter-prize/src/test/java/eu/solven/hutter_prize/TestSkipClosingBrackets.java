@@ -3,6 +3,8 @@ package eu.solven.hutter_prize;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -30,6 +32,23 @@ public class TestSkipClosingBrackets {
 			String decompressedBody = decompressed.get("body").toString();
 
 			Assertions.assertThat(decompressedBody).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void testAnarchism() throws IOException {
+		String page = PepperResourceHelper.loadAsString("/pages/Anarchism");
+
+		Map<String, ?> compressed = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
+
+		String compressedPage = compressed.get("body").toString();
+
+		Assertions.assertThat(compressedPage).hasSize(12259);
+
+		{
+			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);
+			String decompressedBody = decompressed.get("body").toString();
+
 		}
 	}
 
@@ -223,4 +242,21 @@ public class TestSkipClosingBrackets {
 			Assertions.assertThat(decompressed).isEqualTo(page);
 		}
 	}
+
+	@Test
+	public void testMoreThan100_doesNotStartWithDigit() throws IOException {
+		String moreThan100 = IntStream.range(0, 100).mapToObj(i -> "someWord_" + i).collect(Collectors.joining());
+
+		String page = "[[" + moreThan100 + "]]";
+
+		String compressed = (String) preProcessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("[[_" + moreThan100 + "]]");
+
+		{
+			String decompressed = (String) preProcessor.decompress(compressed);
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
 }

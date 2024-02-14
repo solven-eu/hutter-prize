@@ -15,15 +15,13 @@ public class TestImageRefsPreprocessor {
 	@Test
 	public void testAnarchism() throws IOException {
 		String page = PepperResourceHelper.loadAsString("/pages/anarchism");
-		Assertions.assertThat(page).doesNotContain("image_0_").contains("WilliamGodwin.jpg");
+		Assertions.assertThat(page).doesNotContain("Img0_").contains("WilliamGodwin.jpg");
 
 		Map<String, ?> compressed = (Map<String, ?>) reprocessor.compress(Map.of("body", page));
 
 		Assertions.assertThat(compressed).containsKeys("body", "imageRefs");
 
-		Assertions.assertThat(compressed.get("body").toString())
-				.contains("image_0_")
-				.doesNotContain("WilliamGodwin.jpg");
+		Assertions.assertThat(compressed.get("body").toString()).contains("Img0_").doesNotContain("WilliamGodwin.jpg");
 
 		Assertions.assertThat(compressed.get("imageRefs").toString()).contains("WilliamGodwin.jpg");
 

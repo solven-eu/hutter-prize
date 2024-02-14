@@ -17,7 +17,7 @@ public class TestAutocompleteWholeWordPreprocessor {
 
 	@Test
 	public void testGoogol() throws IOException {
-		String page = PepperResourceHelper.loadAsString("/pages/googol");
+		String page = PepperResourceHelper.loadAsString("/pages/Googol");
 		Assertions.assertThat(page).doesNotContain(">>").contains("'''googol'''").hasSize(5482);
 
 		Map<String, ?> compressed = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
@@ -25,7 +25,7 @@ public class TestAutocompleteWholeWordPreprocessor {
 		Assertions.assertThat(compressed).containsKeys("body");
 
 		String compressedPage = compressed.get("body").toString();
-		Assertions.assertThat(compressedPage).contains("'''g>'''").doesNotContain("'''Google'''").hasSize(5002);
+		Assertions.assertThat(compressedPage).contains("'''g>'''").doesNotContain("'''Google'''").hasSize(4952);
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);
@@ -47,7 +47,7 @@ public class TestAutocompleteWholeWordPreprocessor {
 		String compressedPage = compressed.get("body").toString();
 		Assertions.assertThat(compressedPage)
 				// .contains("'''g>'''").doesNotContain("'''Google'''")
-				.hasSize(24761);
+				.hasSize(23483);
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);

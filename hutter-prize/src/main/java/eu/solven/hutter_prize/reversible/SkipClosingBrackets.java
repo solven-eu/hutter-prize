@@ -3,7 +3,6 @@ package eu.solven.hutter_prize.reversible;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -44,7 +43,7 @@ public class SkipClosingBrackets extends ASymbolsPreprocessor {
 
 			if (enclosed.length() >= 100) {
 				// We do not want to pay 3 digits to spare `]]`
-				return Matcher.quoteReplacement(enclosed);
+				return Matcher.quoteReplacement("[[" + ESCAPE + enclosed + closing);
 			}
 
 			return Matcher.quoteReplacement("[[" + enclosed.length() + enclosed);
@@ -69,7 +68,7 @@ public class SkipClosingBrackets extends ASymbolsPreprocessor {
 				nbRemoved.incrementAndGet();
 				return digits;
 			}
-			
+
 			if (digits.isEmpty()) {
 				// UnitTest this case
 				return "";

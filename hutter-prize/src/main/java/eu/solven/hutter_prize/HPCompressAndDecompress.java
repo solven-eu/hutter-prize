@@ -7,8 +7,6 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.solven.hutter_prize.kanzi_only.KanziCompressor;
-import eu.solven.hutter_prize.kanzi_only.SerializingFSTCompressor;
 import eu.solven.hutter_prize.reversible.AlphabetManyPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteStemmingPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteWholeWordPreprocessor;
@@ -18,6 +16,7 @@ import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.ImageRefPreprocessor;
 import eu.solven.hutter_prize.reversible.MathPreprocessor;
+import eu.solven.hutter_prize.reversible.PersistingCompressor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
 import eu.solven.hutter_prize.reversible.SkipClosingBrackets;
@@ -101,36 +100,36 @@ public class HPCompressAndDecompress {
 			new SkipClosingBrackets(),
 
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
-			new ColumnRepresentation(),
+			// new ColumnRepresentation(),
 
 			// Phd9 may be commented as it makes files less human-readable, which is painful during development phase
 			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
 			// We prefer Phd9Preprocessor to be applied only on the text column
 			// new CountMinSketchPreprocessor(),
 			// new PrePhd9Preprocessor(),
-			new Phd9Preprocessor(),
+			// new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
-			new WordAnalysisPreprocessor(),
-			new CharacterAnalysisPreprocessor(),
+			// new WordAnalysisPreprocessor(),
+			// new CharacterAnalysisPreprocessor(),
 			// new LexicalFieldPreprocessor(),
 
 			// This will turn `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
-			new SentenceStartsWithUCPreprocessor(),
+			// new SentenceStartsWithUCPreprocessor(),
 			// This would escape `<` into `<<`
 			// This would escape `>` into `>>`
-			new AutocompleteWholeWordPreprocessor(128),
+			// new AutocompleteWholeWordPreprocessor(128),
 			// This would escape `>\w` into `>>\w`
-			new AutocompleteStemmingPreprocessor(),
+			// new AutocompleteStemmingPreprocessor(),
 
 			// new CharacterEncodingPreprocessor(),
 			// new BWTPreprocessor(),
 
 			// new CompressColumns(),
 
-			// new PersistingCompressor()
-			new SerializingFSTCompressor(),
-			new KanziCompressor(9)
+			new PersistingCompressor()
+	// new SerializingFSTCompressor(),
+	// new KanziCompressor(9)
 
 	), DEBUG);
 
