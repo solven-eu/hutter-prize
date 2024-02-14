@@ -1,18 +1,14 @@
 package eu.solven.hutter_prize.reversible;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -40,27 +36,34 @@ public class PersistingCompressor implements IReversibleCompressor {
 		Path tmpFolder = Files.createTempDirectory("hutter_prize");
 		LOGGER.info("Persisting into {}", tmpFolder);
 
-		Map<String, Object> map = (Map<String, Object>) input;
+		if (input instanceof byte[]) {
+			// Happens after Kanzi
+			byte[] bytes = (byte[]) input;
 
-		try (ZipOutputStream zipOutputStream =
-				new ZipOutputStream(new FileOutputStream(tmpFolder.resolve("whole.zip").toFile()))) {
-			persistMap(tmpFolder, map, (p, bytes) -> {
-				try {
-					Files.write(p, bytes);
+			Files.write(tmpFolder.resolve("whole.knz"), bytes);
+		} else {
+			Map<String, Object> map = (Map<String, Object>) input;
 
-					{
-						Path filePath = tmpFolder.relativize(p);
-						zipOutputStream.putNextEntry(new ZipEntry(filePath.toString()));
+			try (ZipOutputStream zipOutputStream =
+					new ZipOutputStream(new FileOutputStream(tmpFolder.resolve("whole.zip").toFile()))) {
+				persistMap(tmpFolder, map, (p, bytes) -> {
+					try {
+						Files.write(p, bytes);
 
-						zipOutputStream.write(bytes);
+						{
+							Path filePath = tmpFolder.relativize(p);
+							zipOutputStream.putNextEntry(new ZipEntry(filePath.toString()));
 
-						zipOutputStream.closeEntry();
+							zipOutputStream.write(bytes);
+
+							zipOutputStream.closeEntry();
+						}
+					} catch (IOException e) {
+						throw new UncheckedIOException("Issue persisting " + p, e);
 					}
-				} catch (IOException e) {
-					throw new UncheckedIOException("Issue persisting " + p, e);
-				}
 
-			});
+				});
+			}
 		}
 
 		LOGGER.info("Done persisting");

@@ -15,12 +15,9 @@ limitations under the License.
 
 package eu.solven.hutter_prize.kanzi_only;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,14 +39,14 @@ import kanzi.app.InfoPrinter;
 import kanzi.io.CompressedInputStream;
 
 /**
- * From {@link BlockDecompressor} to handle {@link ByteArrayInputStream}
+ * From {@link BlockDecompressor} to handle {@link InputStream}
  * @author Benoit Lacelle
  *
  */
-public class ByteArrayBlockDecompressor implements Runnable, Callable<Integer>
+public class InputStreamDecompressor implements Runnable, Callable<Integer>
 {
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(ByteArrayBlockDecompressor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamDecompressor.class);
    private static final int DEFAULT_BUFFER_SIZE = 65536;
    private static final int MAX_CONCURRENCY = 64;
 
@@ -60,11 +57,11 @@ public class ByteArrayBlockDecompressor implements Runnable, Callable<Integer>
    private final ExecutorService pool;
    private final List<Listener> listeners;
 
-   private final ByteArrayInputStream bais;
-   private final ByteArrayOutputStream baos;
+   private final InputStream bais;
+   private final OutputStream baos;
 
 
-   public ByteArrayBlockDecompressor(Map<String, Object> map, ByteArrayInputStream bais, ByteArrayOutputStream baos)
+   public InputStreamDecompressor(Map<String, Object> map, InputStream bais, OutputStream baos)
    {
 	   this.bais=bais;
 	   this.baos=baos;
@@ -245,7 +242,7 @@ public class ByteArrayBlockDecompressor implements Runnable, Callable<Integer>
 
    static class ByteArrayDecompressTask implements Callable<ByteArrayDecompressResult>
    {
-	   private ByteArrayInputStream bais;
+	   private InputStream bais;
 	      
       private final Map<String, Object> ctx;
       private CompressedInputStream cis;
@@ -253,7 +250,7 @@ public class ByteArrayBlockDecompressor implements Runnable, Callable<Integer>
       private final List<Listener> listeners;
 
 
-      public ByteArrayDecompressTask(Map<String, Object> ctx, List<Listener> listeners, ByteArrayInputStream bais, ByteArrayOutputStream baos)
+      public ByteArrayDecompressTask(Map<String, Object> ctx, List<Listener> listeners, InputStream bais, OutputStream baos)
       {
     	  this.bais=bais;
     	  this.os = baos;

@@ -95,6 +95,12 @@
     <groupId>io.github.flanglet</groupId>
     <artifactId>kanzi</artifactId>
     <version>2.2.0</version></dependency>
+    
+    <dependency>
+    <groupId>de.ruedigermoeller</groupId>
+    <artifactId>fst</artifactId>
+    <version>3.0.4-jdk17</version>
+</dependency>
          
          <!-- https://mvnrepository.com/artifact/io.github.solven-eu.pepper/pepper -->
 <dependency>
@@ -124,7 +130,15 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
 					<!-- https://arrow.apache.org/docs/java/install.html#installing-from-maven -->
-                    <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED</argLine>
+					<!-- https://github.com/RuedigerMoeller/fast-serialization -->
+					<!-- https://github.com/RuedigerMoeller/fast-serialization/issues/312 -->
+                    <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED --add-modules jdk.incubator.foreign --add-opens=java.base/java.lang=ALL-UNNAMED
+            --add-opens=java.base/java.math=ALL-UNNAMED
+            --add-opens=java.base/java.util=ALL-UNNAMED
+            --add-opens=java.base/java.util.concurrent=ALL-UNNAMED
+            --add-opens=java.base/java.net=ALL-UNNAMED
+            --add-opens=java.base/java.text=ALL-UNNAMED
+            --add-opens=java.sql/java.sql=ALL-UNNAMED</argLine>
             </configuration>
         </plugin>
         </plugins>

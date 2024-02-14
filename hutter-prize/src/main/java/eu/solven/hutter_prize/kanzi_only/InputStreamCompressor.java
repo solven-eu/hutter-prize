@@ -43,13 +43,13 @@ import kanzi.transform.TransformFactory;
 
 
 /**
- * From {@link BlockCompressor} to handle {@link ByteArrayInputStream}
+ * From {@link InputStreamCompressor} to handle {@link InputStream}
  * @author Benoit Lacelle
  *
  */
-public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
+public class InputStreamCompressor implements Runnable, Callable<Integer>
 {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ByteArrayBlockCompressor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamCompressor.class);
 	
    private static final int DEFAULT_BUFFER_SIZE = 65536;
    private static final int DEFAULT_BLOCK_SIZE  = 4*1024*1024;
@@ -62,8 +62,8 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
    private final boolean checksum;
    private final boolean skipBlocks;
    private final boolean autoBlockSize;
-   private final ByteArrayInputStream bais;
-   private final ByteArrayOutputStream baos;
+   private final InputStream bais;
+   private final OutputStream baos;
    private final String codec;
    private final String transform;
    private int blockSize;
@@ -72,7 +72,7 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
    private final ExecutorService pool;
 
 
-   public ByteArrayBlockCompressor(Map<String, Object> map, ByteArrayInputStream bais, ByteArrayOutputStream baos)
+   public InputStreamCompressor(Map<String, Object> map, InputStream bais, OutputStream baos)
    {
 	   this.bais=bais;
 	   this.baos=baos;
@@ -255,8 +255,8 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
 
             ctx.put("blockSize", this.blockSize);
             ctx.put("jobs", this.jobs);
-            ByteArrayCompressTask task = new ByteArrayCompressTask(ctx, this.listeners, bais, baos);
-            FileCompressResult fcr = task.call();
+            InputStreamCompressTask task = new InputStreamCompressTask(ctx, this.listeners, bais, baos);
+            InputStreamCompressResult fcr = task.call();
             res = fcr.code;
             read = fcr.read;
             written = fcr.written;
@@ -370,14 +370,14 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
 
 
 
-   static class FileCompressResult
+   static class InputStreamCompressResult
    {
       final int code;
       final long read;
       final long written;
 
 
-      public FileCompressResult(int code, long read, long written)
+      public InputStreamCompressResult(int code, long read, long written)
       {
          this.code = code;
          this.read = read;
@@ -386,7 +386,7 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
    }
 
 
-   static class ByteArrayCompressTask implements Callable<FileCompressResult>
+   static class InputStreamCompressTask implements Callable<InputStreamCompressResult>
    {
       private final Map<String, Object> ctx;
       private final InputStream is;
@@ -395,7 +395,7 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
       private final List<Listener> listeners;
 
 
-      public ByteArrayCompressTask(Map<String, Object> ctx, List<Listener> listeners, ByteArrayInputStream bais, ByteArrayOutputStream baos)
+      public InputStreamCompressTask(Map<String, Object> ctx, List<Listener> listeners, InputStream bais, OutputStream baos)
       {
     	  this.is=bais;
     	  this.os=baos;
@@ -406,7 +406,7 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
 
 
       @Override
-      public FileCompressResult call() throws Exception
+      public InputStreamCompressResult call() throws Exception
       {
          int verbosity = (Integer) this.ctx.get("verbosity");
 
@@ -428,13 +428,13 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
             catch (Exception e)
             {
                System.err.println("Cannot create compressed stream: "+e.getMessage());
-               return new FileCompressResult(Error.ERR_CREATE_COMPRESSOR, 0, 0);
+               return new InputStreamCompressResult(Error.ERR_CREATE_COMPRESSOR, 0, 0);
             }
          }
          catch (Exception e)
          {
             System.err.println("Cannot open output file '"+"inMemory"+"' for writing: " + e.getMessage());
-            return new FileCompressResult(Error.ERR_CREATE_FILE, 0, 0);
+            return new InputStreamCompressResult(Error.ERR_CREATE_FILE, 0, 0);
          }
 
          // Encode
@@ -465,7 +465,7 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
                {
                   System.err.print("Failed to read block from file '"+"inMemory"+"': ");
                   System.err.println(e.getMessage());
-                  return new FileCompressResult(Error.ERR_READ_FILE, read, this.cos.getWritten());
+                  return new InputStreamCompressResult(Error.ERR_READ_FILE, read, this.cos.getWritten());
                }
 
                if (len <= 0)
@@ -480,13 +480,13 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
          {
             System.err.println("An unexpected condition happened. Exiting ...");
             System.err.println(e.getMessage());
-            return new FileCompressResult(e.getErrorCode(), read, this.cos.getWritten());
+            return new InputStreamCompressResult(e.getErrorCode(), read, this.cos.getWritten());
          }
          catch (Exception e)
          {
             System.err.println("An unexpected condition happened. Exiting ...");
             System.err.println(e.getMessage());
-            return new FileCompressResult(Error.ERR_UNKNOWN, read, this.cos.getWritten());
+            return new InputStreamCompressResult(Error.ERR_UNKNOWN, read, this.cos.getWritten());
          }
          finally
          {
@@ -553,7 +553,7 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
             notifyListeners(array, evt);
          }
 
-         return new FileCompressResult(0, read, this.cos.getWritten());
+         return new InputStreamCompressResult(0, read, this.cos.getWritten());
       }
 
 
@@ -568,18 +568,18 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
    }
 
 
-   static class FileCompressWorker implements Callable<FileCompressResult>
+   static class FileCompressWorker implements Callable<InputStreamCompressResult>
    {
-      private final ArrayBlockingQueue<ByteArrayCompressTask> queue;
+      private final ArrayBlockingQueue<InputStreamCompressTask> queue;
 
 
-      public FileCompressWorker(ArrayBlockingQueue<ByteArrayCompressTask> queue)
+      public FileCompressWorker(ArrayBlockingQueue<InputStreamCompressTask> queue)
       {
          this.queue = queue;
       }
 
       @Override
-      public FileCompressResult call() throws Exception
+      public InputStreamCompressResult call() throws Exception
       {
          int res = 0;
          long read = 0;
@@ -587,18 +587,18 @@ public class ByteArrayBlockCompressor implements Runnable, Callable<Integer>
 
          while (res == 0)
          {
-            ByteArrayCompressTask task = this.queue.poll();
+           InputStreamCompressTask task = this.queue.poll();
 
             if (task == null)
                break;
 
-            FileCompressResult result = task.call();
+            InputStreamCompressResult result = task.call();
             res = result.code;
             read += result.read;
             written += result.written;
          }
 
-         return new FileCompressResult(res, read, written);
+         return new InputStreamCompressResult(res, read, written);
       }
    }
 

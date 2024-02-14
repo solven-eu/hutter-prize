@@ -45,7 +45,7 @@ public class HPCompressAndDecompressKanzi {
 			compressionOptions.putAll(commonOptions);
 
 			{
-				ByteArrayBlockCompressor bc = new ByteArrayBlockCompressor(compressionOptions, originalIs, compressed);
+				InputStreamCompressor bc = new InputStreamCompressor(compressionOptions, originalIs, compressed);
 
 				int code = bc.call();
 
@@ -55,7 +55,9 @@ public class HPCompressAndDecompressKanzi {
 			}
 		}
 
-		LOGGER.info("{} compressed into {}", HPUtils.nameAndSize(original), HPUtils.nameAndSize(compressed.toByteArray()));
+		LOGGER.info("{} compressed into {}",
+				HPUtils.nameAndSize(original),
+				HPUtils.nameAndSize(compressed.toByteArray()));
 
 		ByteArrayOutputStream decompressed = new ByteArrayOutputStream();
 		{
@@ -64,7 +66,7 @@ public class HPCompressAndDecompressKanzi {
 			decompressionOptions.putAll(commonOptions);
 
 			{
-				ByteArrayBlockDecompressor bc = new ByteArrayBlockDecompressor(decompressionOptions,
+				InputStreamDecompressor bc = new InputStreamDecompressor(decompressionOptions,
 						new ByteArrayInputStream(compressed.toByteArray()),
 						decompressed);
 
@@ -76,7 +78,9 @@ public class HPCompressAndDecompressKanzi {
 			}
 		}
 
-		LOGGER.info("{} decompressed from {}", HPUtils.nameAndSize(decompressed.toByteArray()), HPUtils.nameAndSize(compressed.toByteArray()));
+		LOGGER.info("{} decompressed from {}",
+				HPUtils.nameAndSize(decompressed.toByteArray()),
+				HPUtils.nameAndSize(compressed.toByteArray()));
 
 		HPCompressAndDecompress.sanityChecks(original, decompressed.toByteArray());
 	}

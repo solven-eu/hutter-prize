@@ -7,17 +7,17 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.solven.hutter_prize.kanzi_only.KanziCompressor;
+import eu.solven.hutter_prize.kanzi_only.SerializingFSTCompressor;
 import eu.solven.hutter_prize.reversible.AlphabetManyPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteStemmingPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteWholeWordPreprocessor;
 import eu.solven.hutter_prize.reversible.CharacterAnalysisPreprocessor;
-import eu.solven.hutter_prize.reversible.CharacterEncodingPreprocessor;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.ImageRefPreprocessor;
 import eu.solven.hutter_prize.reversible.MathPreprocessor;
-import eu.solven.hutter_prize.reversible.PersistingCompressor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
 import eu.solven.hutter_prize.reversible.SkipClosingBrackets;
@@ -128,7 +128,11 @@ public class HPCompressAndDecompress {
 
 			// new CompressColumns(),
 
-			new PersistingCompressor()), DEBUG);
+			// new PersistingCompressor()
+			new SerializingFSTCompressor(),
+			new KanziCompressor(9)
+
+	), DEBUG);
 
 	public static void main(String[] args) throws IOException {
 		IReversibleCompressor compressors = HPCompressAndDecompress.compressor;
