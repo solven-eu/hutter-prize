@@ -12,6 +12,7 @@ import org.junit.Test;
 import eu.solven.hutter_prize.reversible.AutocompleteStemmingPreprocessor;
 import eu.solven.hutter_prize.reversible.AutocompleteWholeWordPreprocessor;
 import eu.solven.hutter_prize.reversible.SkipClosingBrackets;
+import eu.solven.hutter_prize.reversible.utilities.CompositeReversibleCompressor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TestSkipClosingBrackets {

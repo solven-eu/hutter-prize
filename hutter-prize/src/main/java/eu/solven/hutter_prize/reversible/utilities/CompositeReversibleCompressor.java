@@ -1,16 +1,18 @@
-package eu.solven.hutter_prize;
+package eu.solven.hutter_prize.reversible.utilities;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
+import eu.solven.hutter_prize.HPUtils;
+import eu.solven.hutter_prize.IReversibleCompressor;
 import eu.solven.pepper.collection.PepperMapHelper;
+import eu.solven.pepper.logging.PepperLogHelper;
 
 public class CompositeReversibleCompressor implements IReversibleCompressor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CompositeReversibleCompressor.class);
@@ -44,8 +46,10 @@ public class CompositeReversibleCompressor implements IReversibleCompressor {
 	private Object compress(Object output, IReversibleCompressor compressor) throws IOException {
 		Object newOutput = compressor.compress(output);
 
-		LOGGER.info("{} compressed {} into {}",
+		LOGGER.info("{} compressed {} into {} ({} into {})",
 				compressor.getClass().getSimpleName(),
+				PepperLogHelper.humanBytes(HPUtils.size(output)),
+				PepperLogHelper.humanBytes(HPUtils.size(newOutput)),
 				HPUtils.nameAndSize(output),
 				HPUtils.nameAndSize(newOutput));
 

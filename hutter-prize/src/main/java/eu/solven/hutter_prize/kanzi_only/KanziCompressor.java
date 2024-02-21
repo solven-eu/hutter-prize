@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import eu.solven.hutter_prize.IReversibleCompressor;
+import eu.solven.hutter_prize.reversible.utilities.AVisitingCompressor;
 
 /**
  * Persist the whole input with Kanzi
@@ -17,17 +14,25 @@ import eu.solven.hutter_prize.IReversibleCompressor;
  * @author Benoit Lacelle
  *
  */
-public class KanziCompressor implements IReversibleCompressor {
-	private static final Logger LOGGER = LoggerFactory.getLogger(KanziCompressor.class);
-
+public class KanziCompressor extends AVisitingCompressor<byte[], byte[]> {
 	final int level;
 
-	public KanziCompressor(int level) {
+	final boolean toSingleByteArray;
+
+	public KanziCompressor(int level, boolean toSingleByteArray) {
+		super(byte[].class, byte[].class);
 		this.level = level;
+		this.toSingleByteArray = toSingleByteArray;
+	}
+
+	public KanziCompressor(int level) {
+		super(byte[].class, byte[].class);
+		this.level = level;
+		this.toSingleByteArray = true;
 	}
 
 	@Override
-	public Object compress(Object input) throws IOException {
+	public byte[] defaultCompress(Object input) throws IOException {
 		ByteArrayInputStream bytes = new ByteArrayInputStream((byte[]) input);
 
 		Map<String, Object> commonOptions = new HashMap<>();
@@ -57,7 +62,7 @@ public class KanziCompressor implements IReversibleCompressor {
 	}
 
 	@Override
-	public Object decompress(Object output) throws IOException {
+	public byte[] defaultDecompress(Object output) throws IOException {
 		ByteArrayInputStream compressed = new ByteArrayInputStream((byte[]) output);
 
 		Map<String, Object> commonOptions = new HashMap<>();
@@ -87,4 +92,31 @@ public class KanziCompressor implements IReversibleCompressor {
 		return decompressed.toByteArray();
 	}
 
+	@Override
+	public Object compress(Object input) throws IOException {
+		if (toSingleByteArray) {
+			return defaultCompress(input);
+		} else {
+			return super.compress(input);
+		}
+	}
+
+	@Override
+	public Object decompress(Object input) throws IOException {
+		if (toSingleByteArray) {
+			return defaultDecompress(input);
+		} else {
+			return super.decompress(input);
+		}
+	}
+
+	@Override
+	protected byte[] compressString(byte[] string) throws IOException {
+		return defaultCompress(string);
+	}
+
+	@Override
+	protected byte[] decompressString(byte[] bytes) throws IOException {
+		return defaultDecompress(bytes);
+	}
 }

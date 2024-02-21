@@ -84,6 +84,14 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 		} else if (compressed instanceof Map<?, ?>) {
 			Map<String, ?> asMap = (Map<String, ?>) compressed;
 
+			String contextKey = "keyToContext-" + this.getClass().getSimpleName();
+			Map<String, Object> keyToContext;
+			if (compressing) {
+				keyToContext = new TreeMap<>();
+			} else {
+				keyToContext = PepperMapHelper.<Map<String, Object>>getOptionalAs(asMap, contextKey).orElse(Map.of());
+			}
+
 			if (asMap.containsKey("body")) {
 				String body = asMap.get("body").toString();
 
@@ -99,18 +107,8 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 			} else if (asMap.containsKey("keyToVector")) {
 				assert optContext.isEmpty();
 
-				String contextKey = "keyToContext-" + this.getClass().getSimpleName();
-
 				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, "keyToVector");
 				Map<String, Object> keyToVectorOutput = new LinkedHashMap<>(keyToVector);
-
-				Map<String, Object> keyToContext;
-				if (compressing) {
-					keyToContext = new TreeMap<>();
-				} else {
-					keyToContext =
-							PepperMapHelper.<Map<String, Object>>getOptionalAs(asMap, contextKey).orElse(Map.of());
-				}
 
 				if (keyToVector.containsKey("text")) {
 					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, "text");

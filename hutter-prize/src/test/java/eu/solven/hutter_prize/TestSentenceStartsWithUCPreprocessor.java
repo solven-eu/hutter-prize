@@ -15,7 +15,7 @@ public class TestSentenceStartsWithUCPreprocessor {
 
 	@Test
 	public void testGoogol() throws IOException {
-		String page = PepperResourceHelper.loadAsString("/pages/googol");
+		String page = PepperResourceHelper.loadAsString("/pages/Googol");
 
 		Map<String, ?> compressed = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
 

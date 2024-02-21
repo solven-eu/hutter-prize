@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.extract_language;
 
 /**
  * PHD9 was Hutter Prize winner in 2018, and some of its logic is still used by latest top-entries. We re-implement here

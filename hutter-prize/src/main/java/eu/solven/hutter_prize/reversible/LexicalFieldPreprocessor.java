@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.util.concurrent.AtomicLongMap;
 
+import eu.solven.hutter_prize.reversible.extract_language.PatternExtractorPreprocessor;
+
 /**
  * We want to replace the lexical field of each page by some dumb word. The point being to have a simple text to
  * compress, and dedicated compression for the lexical field and for the generic text (left with grammar and

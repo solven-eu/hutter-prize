@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.extract_language;
 
 /**
  * Extract blocks known as holding many non-ASCII characters, in order to pack together most uses of each alphabet.

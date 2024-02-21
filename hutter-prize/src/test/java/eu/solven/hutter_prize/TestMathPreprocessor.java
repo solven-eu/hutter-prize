@@ -6,7 +6,7 @@ import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import eu.solven.hutter_prize.reversible.MathPreprocessor;
+import eu.solven.hutter_prize.reversible.extract_language.MathPreprocessor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TestMathPreprocessor {

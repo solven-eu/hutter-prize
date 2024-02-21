@@ -3,11 +3,14 @@ package eu.solven.hutter_prize.kanzi_only;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.FileSystemResource;
 
 import eu.solven.hutter_prize.HPCompressAndDecompress;
 import eu.solven.hutter_prize.HPUtils;
@@ -23,11 +26,20 @@ import kanzi.app.Kanzi;
 public class HPCompressAndDecompressKanzi {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HPCompressAndDecompressKanzi.class);
 
+	private static final boolean CUSTOM_CLEAR_TXT = true;
+
 	public static void main(String[] args) throws IOException {
 		Object initialInput = HPUtils.zipped;
 
-		// We remove the initial ZIP impact from the analysis
-		byte[] original = (byte[]) new ZipToByteArray().compress(initialInput);
+		byte[] original;
+		if (CUSTOM_CLEAR_TXT) {
+			String path = "/Users/blacelle/Downloads/enwik8_text";
+			initialInput = new FileSystemResource(path);
+			original = Files.readAllBytes(Paths.get(path));
+		} else {
+			// We remove the initial ZIP impact from the analysis
+			original = (byte[]) new ZipToByteArray().compress(initialInput);
+		}
 
 		ByteArrayInputStream originalIs = new ByteArrayInputStream(original);
 

@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.utilities;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -6,6 +6,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -28,8 +29,8 @@ import it.unimi.dsi.fastutil.ints.IntList;
  * @author Benoit Lacelle
  *
  */
-public class PersistingCompressor implements IReversibleCompressor {
-	private static final Logger LOGGER = LoggerFactory.getLogger(PersistingCompressor.class);
+public class PersistingInterceptor implements IReversibleCompressor {
+	private static final Logger LOGGER = LoggerFactory.getLogger(PersistingInterceptor.class);
 
 	@Override
 	public Object compress(Object input) throws IOException {
@@ -48,8 +49,10 @@ public class PersistingCompressor implements IReversibleCompressor {
 					new ZipOutputStream(new FileOutputStream(tmpFolder.resolve("whole.zip").toFile()))) {
 				persistMap(tmpFolder, map, (p, bytes) -> {
 					try {
+						// Write the plain file
 						Files.write(p, bytes);
 
+						// And accumulate in a ZIP
 						{
 							Path filePath = tmpFolder.relativize(p);
 							zipOutputStream.putNextEntry(new ZipEntry(filePath.toString()));
@@ -77,15 +80,19 @@ public class PersistingCompressor implements IReversibleCompressor {
 			Path outputPath = parentFolder.resolve(k);
 
 			if (v instanceof String) {
-				consume.accept(outputPath, v.toString().getBytes(StandardCharsets.UTF_8));
+				consume.accept(Paths.get(outputPath.toString() + ".str"),
+						v.toString().getBytes(StandardCharsets.UTF_8));
 			} else if (v instanceof IntList) {
 				IntList intList = (IntList) v;
 				String asString = intList.intStream().mapToObj(Integer::toString).collect(Collectors.joining("\r\n"));
 
-				consume.accept(outputPath, asString.getBytes(StandardCharsets.UTF_8));
+				consume.accept(Paths.get(outputPath.toString() + ".txt"), asString.getBytes(StandardCharsets.UTF_8));
 			} else if (v instanceof Collection<?>) {
 				Collection<?> c = (Collection<?>) v;
 				persistCollection(k, outputPath, c, consume);
+			} else if (v instanceof byte[]) {
+				byte[] c = (byte[]) v;
+				consume.accept(Paths.get(outputPath.toString() + ".bin"), c);
 			} else if (v instanceof Map<?, ?>) {
 				Map<String, Object> vAsMap = (Map<String, Object>) v;
 
@@ -107,7 +114,7 @@ public class PersistingCompressor implements IReversibleCompressor {
 	private void persistCollection(String k, Path outputPath, Collection<?> intList, BiConsumer<Path, byte[]> consume) {
 		String asString = intList.stream().map(String::valueOf).collect(Collectors.joining("\n---------\n"));
 
-		consume.accept(outputPath, asString.getBytes(StandardCharsets.UTF_8));
+		consume.accept(Paths.get(outputPath.toString() + ".col"), asString.getBytes(StandardCharsets.UTF_8));
 	}
 
 	@Override

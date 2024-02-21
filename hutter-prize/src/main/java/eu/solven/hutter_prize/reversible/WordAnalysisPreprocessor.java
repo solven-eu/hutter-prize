@@ -35,6 +35,20 @@ public class WordAnalysisPreprocessor extends ASymbolsPreprocessor {
 			if (rawInput instanceof String) {
 				String rawAsString = rawInput.toString();
 
+				// Either unit like `dB` or proper noun like `iPod`
+				Pattern.compile(" [a-z]+[A-Z]").matcher(rawAsString).results().forEach(mr -> {
+					LOGGER.info("{}", mr.group());
+					
+					// Words: encoded as lowerCase separated by space
+					// 26 * N + (N-1)*1whitespace : 27 symbols
+					// Words: encoded as lowerCase separated by first letter as upperCase
+					// 26 * N : 52 symbols
+					
+					// Proper noun:
+					// We would include symbols like `-` often used in firstNames
+					// We would also have various non-english symbols (e.g. with given accents)
+				});
+
 				Pattern.compile("\\w+")
 						.matcher(rawAsString)
 						.results()

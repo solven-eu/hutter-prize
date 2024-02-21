@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
  * the code. It refers to the UTF8 standard `&#nnnn;` notation
  * (https://en.wikipedia.org/wiki/List_of_Unicode_characters).
  * 
+ * The point is to have a smaller set of characters
+ * 
  * @author Benoit Lacelle
  */
 public class CharacterEncodingPreprocessor extends ASymbolsPreprocessor {

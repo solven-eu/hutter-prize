@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +22,12 @@ import com.google.common.collect.SetMultimap;
 
 import eu.solven.hutter_prize.HPUtils;
 import eu.solven.hutter_prize.IReversibleCompressor;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 public class ColumnRepresentation implements IReversibleCompressor {
 
@@ -85,7 +91,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 		Map<String, String> closerToColumn = closerToColumn();
 
-		Map<String, List<?>> keyToVector = new HashMap<>();
+		Map<String, Object> keyToVector = new HashMap<>();
 
 		keyToVector.put("title", Arrays.asList(new String[countPages]));
 		keyToVector.put("id", new IntArrayList(new int[countPages]));
@@ -102,7 +108,6 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		keyToVector.put("leftovers", leftoverVector);
 
 		List<List<String>> separators2 = Arrays.asList(new List[countPages]);
-		keyToVector.put("separators", separators2);
 
 		try {
 			int pageIndex = -1;
@@ -195,7 +200,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 					String column = getCloserToColumn(closerToColumn, page, optCloser.get());
 
-					List<?> vector = keyToVector.get(column);
+					List<?> vector = (List<?>) keyToVector.get(column);
 
 					if (vector instanceof IntArrayList) {
 						((IntArrayList) vector).set(pageIndex, Integer.parseInt(value));
@@ -220,6 +225,18 @@ public class ColumnRepresentation implements IReversibleCompressor {
 				// if (previousEndPage != indexEndPage) {
 				// System.out.println();
 				// }
+			}
+
+			{
+				Object2IntMap<List<String>> separatorsToIndex = new Object2IntOpenHashMap<>();
+				int[] indexes = new int[separators2.size()];
+
+				for (int i = 0; i < indexes.length; i++) {
+					int index = separatorsToIndex.computeIfAbsent(separators2.get(i), k -> separatorsToIndex.size());
+					indexes[i] = index;
+				}
+
+				keyToVector.put("separators", Map.of("indexes", indexes, "mapping", separatorsToIndex));
 			}
 
 			// Make sure we let transit other information in other fields
@@ -268,7 +285,18 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		Map<String, String> closerToColumn = closerToColumn();
 
 		List<String> leftovers = (List<String>) keyToVector.get("leftovers");
-		List<List<String>> separators2 = (List<List<String>>) keyToVector.get("separators");
+		List<List<String>> separators2;
+		{
+			Map<String, Object> details = (Map<String, Object>) keyToVector.get("separators");
+
+			int[] indexes = (int[]) details.get("indexes");
+			Object2IntMap<List<String>> separatorsToIndex = (Object2IntMap<List<String>>) details.get("mapping");
+
+			Int2ObjectMap<List<String>> indexToSeparators = new Int2ObjectOpenHashMap<>();
+			separatorsToIndex.object2IntEntrySet().forEach(e -> indexToSeparators.put(e.getIntValue(), e.getKey()));
+
+			separators2 = IntStream.of(indexes).mapToObj(i -> indexToSeparators.get(i)).collect(Collectors.toList());
+		}
 
 		for (int i = 0; i < keyToVector.get("id").size(); i++) {
 			List<String> separators = separators2.get(i);
@@ -284,7 +312,11 @@ public class ColumnRepresentation implements IReversibleCompressor {
 						sb.append(((IntList) column).getInt(i));
 					} else {
 						// We expect to receive only String
-						sb.append(column.get(i).toString());
+						Object columnValue = column.get(i);
+						if (columnValue == null) {
+							throw new IllegalStateException("column=" + columnname + " rowIndex=" + i);
+						}
+						sb.append(columnValue.toString());
 					}
 				}
 

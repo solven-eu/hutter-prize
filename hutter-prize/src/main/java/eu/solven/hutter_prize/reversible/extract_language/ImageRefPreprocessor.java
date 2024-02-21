@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.extract_language;
 
 /**
  * We extract `[[Image:]]`

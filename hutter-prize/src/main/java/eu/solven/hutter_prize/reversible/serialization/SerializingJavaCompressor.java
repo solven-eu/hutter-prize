@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.kanzi_only;
+package eu.solven.hutter_prize.reversible.serialization;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
