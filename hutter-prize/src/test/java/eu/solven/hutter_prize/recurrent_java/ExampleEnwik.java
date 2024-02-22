@@ -14,7 +14,7 @@ import eu.solven.hutter_prize.recurrent_java.datasets.TextGeneration;
 import eu.solven.hutter_prize.recurrent_java.model.Model;
 import eu.solven.hutter_prize.recurrent_java.trainer.Trainer;
 import eu.solven.hutter_prize.recurrent_java.util.NeuralNetworkHelper;
-import eu.solven.hutter_prize.reversible.ZipToByteArray;
+import eu.solven.hutter_prize.reversible.utilities.ZipToByteArray;
 import eu.solven.pepper.io.PepperSerializationHelper;
 import eu.solven.pepper.memory.PepperMemoryHelper;
 

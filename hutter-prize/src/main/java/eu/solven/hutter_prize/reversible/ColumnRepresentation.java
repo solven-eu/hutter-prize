@@ -29,9 +29,16 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
+/**
+ * This will detect the columnar representation of the underlying XML, and extract each data into separated columns
+ * 
+ * @author Benoit Lacelle
+ *
+ */
 public class ColumnRepresentation implements IReversibleCompressor {
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(ColumnRepresentation.class);
+
+	public static final String KEY_KEYTOVECTOR = "ColumnRepresentation.keyToVector";
 
 	private Map<String, String> closerToColumn() {
 		Map<String, String> closerToColumn = new HashMap<>();
@@ -244,7 +251,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 			// We preprocessed `body` into `keyToVector`
 			output.remove("body");
-			output.put("keyToVector", keyToVector);
+			output.put(KEY_KEYTOVECTOR, keyToVector);
 
 			// Write an updated footer
 			output.put("footer", footer);
@@ -278,7 +285,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 
 		String footer = (String) asMap.get("footer");
 
-		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asMap.get("keyToVector");
+		Map<String, List<?>> keyToVector = (Map<String, List<?>>) asMap.get(KEY_KEYTOVECTOR);
 
 		StringBuilder sb = new StringBuilder();
 
@@ -345,7 +352,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		Map<String, Object> input = new LinkedHashMap<>(asMap);
 
 		// We preprocessed `body` into `keyToVector`
-		input.remove("keyToVector");
+		input.remove(KEY_KEYTOVECTOR);
 		input.put("body", sb.toString());
 
 		// Write an updated footer

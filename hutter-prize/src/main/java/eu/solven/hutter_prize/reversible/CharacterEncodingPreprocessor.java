@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
  * the code. It refers to the UTF8 standard `&#nnnn;` notation
  * (https://en.wikipedia.org/wiki/List_of_Unicode_characters).
  * 
- * The point is to have a smaller set of characters
+ * The point is to have a smaller set of characters, which may make `PackCharactersPreprocessor` more efficient.
  * 
  * @author Benoit Lacelle
  */
@@ -21,12 +21,17 @@ public class CharacterEncodingPreprocessor extends ASymbolsPreprocessor {
 		}
 
 		return string.codePoints().mapToObj(codePoint -> {
-			if (codePoint >= 0x007F) {
+			if (doEncode(codePoint)) {
 				return "&$" + codePoint + ";";
 			} else {
 				return Character.toString(codePoint);
 			}
 		}).collect(Collectors.joining());
+	}
+
+	protected boolean doEncode(int codePoint) {
+		// We encode any UTF8 character needing more than 2 bytes.
+		return codePoint >= 0x007F;
 	}
 
 	@Override

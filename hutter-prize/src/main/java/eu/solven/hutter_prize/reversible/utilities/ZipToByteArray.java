@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.utilities;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

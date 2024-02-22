@@ -98,8 +98,10 @@ public class CompositeReversibleCompressor implements IReversibleCompressor {
 				throw new IllegalArgumentException("Issue with " + compressor.getClass().getSimpleName(), e);
 			}
 
-			LOGGER.info("{} uncompressed {} from {}",
+			LOGGER.info("{} uncompressed {} from {} ({} from {})",
 					compressor.getClass().getSimpleName(),
+					PepperLogHelper.humanBytes(HPUtils.size(newInput)),
+					PepperLogHelper.humanBytes(HPUtils.size(input)),
 					HPUtils.nameAndSize(newInput),
 					HPUtils.nameAndSize(input));
 

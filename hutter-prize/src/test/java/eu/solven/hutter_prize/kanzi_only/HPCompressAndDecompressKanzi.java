@@ -14,7 +14,7 @@ import org.springframework.core.io.FileSystemResource;
 
 import eu.solven.hutter_prize.HPCompressAndDecompress;
 import eu.solven.hutter_prize.HPUtils;
-import eu.solven.hutter_prize.reversible.ZipToByteArray;
+import eu.solven.hutter_prize.reversible.utilities.ZipToByteArray;
 import kanzi.app.Kanzi;
 
 /**
@@ -26,7 +26,7 @@ import kanzi.app.Kanzi;
 public class HPCompressAndDecompressKanzi {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HPCompressAndDecompressKanzi.class);
 
-	private static final boolean CUSTOM_CLEAR_TXT = true;
+	private static final boolean CUSTOM_CLEAR_TXT = false;
 
 	public static void main(String[] args) throws IOException {
 		Object initialInput = HPUtils.zipped;

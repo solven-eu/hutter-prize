@@ -10,14 +10,14 @@ import eu.solven.hutter_prize.reversible.extract_language.MathPreprocessor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TestMathPreprocessor {
-	final MathPreprocessor mathPreprocessor = new MathPreprocessor();
+	final IReversibleCompressor preprocessor = new MathPreprocessor();
 
 	@Test
 	public void testGoogol() throws IOException {
 		String page = PepperResourceHelper.loadAsString("/pages/googol");
 		Assertions.assertThat(page).doesNotContain("math(0)").contains("10^{8 \\times 10^{16}}");
 
-		Map<String, ?> compressed = (Map<String, ?>) mathPreprocessor.compress(Map.of("body", page));
+		Map<String, ?> compressed = (Map<String, ?>) preprocessor.compress(Map.of("body", page));
 
 		Assertions.assertThat(compressed).containsKeys("body", "formulas");
 
@@ -28,7 +28,7 @@ public class TestMathPreprocessor {
 		Assertions.assertThat(compressed.get("formulas").toString()).contains("10^{8 \\times 10^{16}}");
 
 		{
-			Map<String, ?> decompressed = (Map<String, ?>) mathPreprocessor.decompress(compressed);
+			Map<String, ?> decompressed = (Map<String, ?>) preprocessor.decompress(compressed);
 			String decompressedBody = decompressed.get("body").toString();
 
 			Assertions.assertThat(decompressedBody).isEqualTo(page);

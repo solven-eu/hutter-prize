@@ -7,13 +7,11 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.solven.hutter_prize.kanzi_only.KanziCompressor;
 import eu.solven.hutter_prize.reversible.ColumnRepresentation;
+import eu.solven.hutter_prize.reversible.ExtractGrammarFromTextPreprocessor;
 import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
-import eu.solven.hutter_prize.reversible.PackCharactersPreprocessor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
-import eu.solven.hutter_prize.reversible.ZipToByteArray;
 import eu.solven.hutter_prize.reversible.extract_language.AlphabetManyPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.ImageRefPreprocessor;
@@ -21,9 +19,9 @@ import eu.solven.hutter_prize.reversible.extract_language.MathPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.TableHtmlPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.TableMarkdownPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.UrlPreprocessor;
-import eu.solven.hutter_prize.reversible.serialization.SerializingFSTCompressor;
 import eu.solven.hutter_prize.reversible.utilities.CompositeReversibleCompressor;
 import eu.solven.hutter_prize.reversible.utilities.PersistingInterceptor;
+import eu.solven.hutter_prize.reversible.utilities.ZipToByteArray;
 
 public class HPCompressAndDecompress {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HPCompressAndDecompress.class);
@@ -114,6 +112,8 @@ public class HPCompressAndDecompress {
 			new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
+			new ExtractGrammarFromTextPreprocessor(),
+
 			// new WordAnalysisPreprocessor(),
 			// new CharacterAnalysisPreprocessor(),
 			// new LexicalFieldPreprocessor(),
@@ -132,9 +132,10 @@ public class HPCompressAndDecompress {
 			// We do not apply `PackCharactersPreprocessor` after `ColumnRepresentation`
 			// Else common words like `the` would be encoded differently, preventing further compression mechanisms
 			// new PackCharactersPreprocessor(),
-			new SerializingFSTCompressor(false),
+
+			// new SerializingFSTCompressor(false),
 			// kanzi.app.BlockCompressor.getTransformAndCodec(int)
-			new KanziCompressor(9, false),
+			// new KanziCompressor(9, false),
 
 			new PersistingInterceptor()
 

@@ -1,10 +1,6 @@
 package eu.solven.hutter_prize.reversible;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.stream.IntStream;
@@ -41,12 +37,6 @@ public class PackCharactersPreprocessor extends AVisitingCompressor<String, byte
 		Int2IntMap codePointToIndex = new Int2IntOpenHashMap();
 
 		string.codePoints().forEach(codePoint -> codePointToIndex.putIfAbsent(codePoint, codePointToIndex.size()));
-
-		// int numberOfLeadingZeros = Integer.numberOfLeadingZeros(codePointToIndex.size());
-		// if (numberOfLeadingZeros <= 5) {
-		// // TODO 25 is a hardcoded large value
-		// throw new IllegalArgumentException("Compression is inefficient");
-		// }
 
 		IntBuffer intBuffer;
 		{
@@ -86,13 +76,6 @@ public class PackCharactersPreprocessor extends AVisitingCompressor<String, byte
 
 		IntBuffer asIntBuffer = byteBuffer.asIntBuffer();
 
-		// // Write the dictionary
-		// asIntBuffer.put(codePointToIndex.size());
-		// codePointToIndex.int2IntEntrySet().forEach(e -> {
-		// asIntBuffer.put(e.getIntKey());
-		// asIntBuffer.put(e.getIntValue());
-		// });
-
 		asIntBuffer.put(intBuffer.capacity());
 
 		// Write the compressed ints
@@ -103,15 +86,6 @@ public class PackCharactersPreprocessor extends AVisitingCompressor<String, byte
 
 	@Override
 	protected String decompressString(byte[] bytes) throws IOException {
-		// Int2IntMap codePointToIndex;
-		// ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-		// try (ObjectInputStream ois = new ObjectInputStream(bais)) {
-		// try {
-		// codePointToIndex = (Int2IntMap) ois.readObject();
-		// } catch (ClassNotFoundException e) {
-		// throw new IllegalArgumentException(e);
-		// }
-		// }
 		IntBuffer bb = ByteBuffer.wrap(bytes).asIntBuffer();
 
 		int compressedInts = bb.get();
@@ -145,10 +119,10 @@ public class PackCharactersPreprocessor extends AVisitingCompressor<String, byte
 			indexToCodepoint.put(index, codePoint);
 		}
 
-		int intForDic =  (1 + 2 * indexSize);
+		int intForDic = (1 + 2 * indexSize);
 		int intForIndexes = decompressed.length - intForDic;
 
-		int[] indexedCodePoints = new int[intForIndexes ];
+		int[] indexedCodePoints = new int[intForIndexes];
 		decompressedBB.get(indexedCodePoints);
 
 		int[] codePoints = IntStream.of(indexedCodePoints).map(index -> indexToCodepoint.get(index)).toArray();

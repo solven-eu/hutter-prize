@@ -18,6 +18,8 @@ import eu.solven.pepper.collection.PepperMapHelper;
  *
  */
 public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
+	public static final String KEY_TEXT = "text";
+
 	static interface IProcessString {
 		String compress(Map<String, ?> context, int index, String string);
 	}
@@ -104,21 +106,21 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 				output.put("body", simplifiedBody);
 
 				return output;
-			} else if (asMap.containsKey("keyToVector")) {
+			} else if (asMap.containsKey(ColumnRepresentation.KEY_KEYTOVECTOR)) {
 				assert optContext.isEmpty();
 
-				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, "keyToVector");
+				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, ColumnRepresentation.KEY_KEYTOVECTOR);
 				Map<String, Object> keyToVectorOutput = new LinkedHashMap<>(keyToVector);
 
-				if (keyToVector.containsKey("text")) {
-					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, "text");
+				if (keyToVector.containsKey(KEY_TEXT)) {
+					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, KEY_TEXT);
 					Map<String, ?> compressingContext =
-							compressing ? analyzeList(texts) : (Map<String, ?>) keyToContext.get("text");
+							compressing ? analyzeList(texts) : (Map<String, ?>) keyToContext.get(KEY_TEXT);
 					List<?> processedTexts =
 							(List<?>) process(compressing, transformString, texts, Optional.of(compressingContext));
-					keyToVectorOutput.put("text", processedTexts);
+					keyToVectorOutput.put(KEY_TEXT, processedTexts);
 					if (compressing) {
-						keyToContext.put("text", compressingContext);
+						keyToContext.put(KEY_TEXT, compressingContext);
 					}
 				}
 
@@ -139,7 +141,7 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 				}
 
 				Map<String, Object> decompressed = new LinkedHashMap<>(asMap);
-				decompressed.put("keyToVector", keyToVectorOutput);
+				decompressed.put(ColumnRepresentation.KEY_KEYTOVECTOR, keyToVectorOutput);
 
 				if (compressing) {
 					if (!keyToContext.isEmpty()) {

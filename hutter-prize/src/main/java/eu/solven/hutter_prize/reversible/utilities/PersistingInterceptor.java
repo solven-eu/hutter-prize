@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
@@ -84,9 +86,10 @@ public class PersistingInterceptor implements IReversibleCompressor {
 						v.toString().getBytes(StandardCharsets.UTF_8));
 			} else if (v instanceof IntList) {
 				IntList intList = (IntList) v;
-				String asString = intList.intStream().mapToObj(Integer::toString).collect(Collectors.joining("\r\n"));
-
-				consume.accept(Paths.get(outputPath.toString() + ".txt"), asString.getBytes(StandardCharsets.UTF_8));
+				persistCollection(k, outputPath, intList, consume);
+			} else if (v instanceof int[]) {
+				IntList intList = new IntArrayList((int[]) v);
+				persistCollection(k, outputPath, intList, consume);
 			} else if (v instanceof Collection<?>) {
 				Collection<?> c = (Collection<?>) v;
 				persistCollection(k, outputPath, c, consume);
@@ -101,6 +104,9 @@ public class PersistingInterceptor implements IReversibleCompressor {
 				} else if (vAsMap.values().iterator().next() instanceof String) {
 					// We assume the whole Map is String -> String
 					persistCollection(k, outputPath, vAsMap.entrySet(), consume);
+				} else if (vAsMap.getClass().getName().startsWith("it.unimi.dsi.fastutil.")) {
+					consume.accept(Paths.get(outputPath.toString() + ".txt"),
+							vAsMap.toString().getBytes(StandardCharsets.UTF_8));
 				} else {
 					persistMap(outputPath, vAsMap, consume);
 				}
@@ -112,9 +118,22 @@ public class PersistingInterceptor implements IReversibleCompressor {
 	}
 
 	private void persistCollection(String k, Path outputPath, Collection<?> intList, BiConsumer<Path, byte[]> consume) {
-		String asString = intList.stream().map(String::valueOf).collect(Collectors.joining("\n---------\n"));
+		String separator = findSeparator(intList);
+
+		String asString = intList.stream().map(String::valueOf).collect(Collectors.joining(separator));
 
 		consume.accept(Paths.get(outputPath.toString() + ".col"), asString.getBytes(StandardCharsets.UTF_8));
+	}
+
+	private String findSeparator(Collection<?> intList) {
+		return Stream.of(" ", "\n", "\n\n", "\n-\n", "\n~\n", "\n!\n", "\n-----\n", "\n-1-2-3-4-5-\n")
+				.filter(separator -> intList.stream()
+						.map(String::valueOf)
+						.noneMatch(subString -> subString.contains(separator)))
+				.findFirst()
+				.orElseThrow(() -> {
+					return new IllegalStateException("NoValidSeparator");
+				});
 	}
 
 	@Override
