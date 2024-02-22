@@ -1,6 +1,7 @@
 package eu.solven.hutter_prize.reversible;
 
 import java.util.Map;
+import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
 import com.google.common.util.concurrent.AtomicLongMap;
@@ -13,7 +14,7 @@ import com.google.common.util.concurrent.AtomicLongMap;
  * @author Benoit Lacelle
  *
  */
-public class SentenceStartsWithUCPreprocessor extends ASymbolsPreprocessor {
+public class SentenceStartsWithUCPreprocessor extends AStringColumnEditorPreprocessor {
 	// This is compatible with the normal word regex
 	private static final String MAGIC_SUFFIX = "FLC";
 
@@ -23,7 +24,14 @@ public class SentenceStartsWithUCPreprocessor extends ASymbolsPreprocessor {
 		Pattern.compile("(?<=(?:[a-zA-Z] ))[A-Z][a-zA-Z]*")
 				.matcher(string)
 				.results()
-				.forEach(mr -> properNounToCount.incrementAndGet(mr.group()));
+				.map(MatchResult::group)
+				// We exclude english `I` which is upperCase even in the middle of sentence
+				// .filter(f -> !f.equals("I"))
+				.forEach(mr -> properNounToCount.incrementAndGet(mr));
+
+		// Register `I` as a properNoun, to keep it upperCase
+		properNounToCount.incrementAndGet("I");
+
 		return properNounToCount;
 	}
 

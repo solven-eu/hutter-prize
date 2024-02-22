@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.deprecated;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,6 +18,7 @@ import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.hash.BloomFilter;
 
 import eu.solven.hutter_prize.HPUtils;
+import eu.solven.hutter_prize.reversible.AStringColumnEditorPreprocessor;
 import smile.sequence.HMM;
 
 /**
@@ -33,7 +34,7 @@ import smile.sequence.HMM;
  *
  */
 // https://github.com/amargaritov/starlit/blob/master/src/readalike_prepr/phda9_preprocess.h
-public class HmmSymbolsPreprocessor extends ASymbolsPreprocessor {
+public class HmmSymbolsPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HmmSymbolsPreprocessor.class);
 
 	@Override

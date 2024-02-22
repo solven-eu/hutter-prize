@@ -13,7 +13,7 @@ public class UrlPreprocessor extends PatternExtractorPreprocessor {
 	public UrlPreprocessor() {
 		super(
 				// We handle a subset of potential scheme
-				"\\[url\\d+_",
+				"URL\\d+_",
 				// Either the URL is closed by `]`, or the link is couple with a nice sentence, separated of the URL by
 				// a ` `
 				"\\[http://",

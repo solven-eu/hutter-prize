@@ -21,7 +21,7 @@ import kanzi.transform.BWTS;
  * @author Benoit Lacelle
  *
  */
-public class BWTPreprocessor extends ASymbolsPreprocessor {
+public class BWTPreprocessor extends AStringColumnEditorPreprocessor {
 
 	private static final int MAX_ASCII = 0x007F;
 	// As we will manipulate bytes, we are happy to handle up to 255 characters

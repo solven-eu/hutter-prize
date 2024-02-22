@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.deprecated;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

@@ -24,7 +24,7 @@ import smile.nlp.stemmer.LancasterStemmer;
  * @author Benoit Lacelle
  *
  */
-public class AutocompleteStemmingPreprocessor extends ASymbolsPreprocessor {
+public class AutocompleteStemmingPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AutocompleteStemmingPreprocessor.class);
 
 	// Given we look for repeating words, there is no need to look at the whole context: a relevant word would repeat

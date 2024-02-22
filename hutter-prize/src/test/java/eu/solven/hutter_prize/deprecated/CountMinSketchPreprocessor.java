@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.deprecated;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -24,6 +24,8 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AtomicLongMap;
 
 import eu.solven.hutter_prize.HPUtils;
+import eu.solven.hutter_prize.reversible.AStringColumnEditorPreprocessor;
+import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.stream_count.CountMinSketch;
 import eu.solven.hutter_prize.reversible.stream_count.Murmur3;
 
@@ -37,7 +39,7 @@ import eu.solven.hutter_prize.reversible.stream_count.Murmur3;
  *
  */
 // https://github.com/amargaritov/starlit/blob/master/src/readalike_prepr/phda9_preprocess.h
-public class CountMinSketchPreprocessor extends ASymbolsPreprocessor {
+public class CountMinSketchPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CountMinSketchPreprocessor.class);
 
 	@Override

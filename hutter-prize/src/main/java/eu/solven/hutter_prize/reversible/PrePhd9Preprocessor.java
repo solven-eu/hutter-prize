@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 // https://github.com/amargaritov/starlit/blob/master/src/readalike_prepr/phda9_preprocess.h
-public class PrePhd9Preprocessor extends ASymbolsPreprocessor {
+public class PrePhd9Preprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PrePhd9Preprocessor.class);
 
 	@Override

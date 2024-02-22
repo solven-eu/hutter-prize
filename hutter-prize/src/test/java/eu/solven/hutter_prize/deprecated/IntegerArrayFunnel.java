@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.deprecated;
 
 import com.google.common.hash.Funnel;
 import com.google.common.hash.PrimitiveSink;

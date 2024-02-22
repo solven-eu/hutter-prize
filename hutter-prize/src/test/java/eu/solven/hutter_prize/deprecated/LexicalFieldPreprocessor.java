@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.deprecated;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.util.concurrent.AtomicLongMap;
 
+import eu.solven.hutter_prize.reversible.AStringColumnEditorPreprocessor;
+import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.PatternExtractorPreprocessor;
 
 /**
@@ -27,7 +29,7 @@ import eu.solven.hutter_prize.reversible.extract_language.PatternExtractorPrepro
  * @author Benoit Lacelle
  *
  */
-public class LexicalFieldPreprocessor extends ASymbolsPreprocessor {
+public class LexicalFieldPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(LexicalFieldPreprocessor.class);
 
 	private Map<String, String> getDictionary(Map<String, ?> context, int index) {

@@ -16,7 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
  * 
  * @author Benoit Lacelle
  */
-public class SkipClosingBrackets extends ASymbolsPreprocessor {
+public class SkipClosingBrackets extends AStringColumnEditorPreprocessor {
 	private static final String ESCAPE = "_";
 
 	@Override

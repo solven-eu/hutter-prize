@@ -7,11 +7,12 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.solven.hutter_prize.reversible.ColumnRepresentation;
 import eu.solven.hutter_prize.reversible.ExtractGrammarFromTextPreprocessor;
-import eu.solven.hutter_prize.reversible.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
+import eu.solven.hutter_prize.reversible.StemAnalysisPreprocessor;
+import eu.solven.hutter_prize.reversible.enwik.HeaderArticlesFooter;
+import eu.solven.hutter_prize.reversible.enwik.XmlToColumnarPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.AlphabetManyPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.ImageRefPreprocessor;
@@ -29,8 +30,10 @@ public class HPCompressAndDecompress {
 	private static boolean DEBUG = false;
 
 	static final IReversibleCompressor compressor = new CompositeReversibleCompressor(Arrays.asList(
+
 			// new ZipToByteArray(),
 			new HeaderArticlesFooter(),
+
 			// `MathPreprocessor` discards mathematical formulas, freeing a lot of small words
 			new MathPreprocessor(),
 			new UrlPreprocessor(),
@@ -102,7 +105,7 @@ public class HPCompressAndDecompress {
 			new SentenceStartsWithUCPreprocessor(),
 
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
-			new ColumnRepresentation(),
+			new XmlToColumnarPreprocessor(),
 
 			// Phd9 may be commented as it makes files less human-readable, which is painful during development phase
 			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
@@ -112,7 +115,9 @@ public class HPCompressAndDecompress {
 			new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
-			new ExtractGrammarFromTextPreprocessor(),
+			new StemAnalysisPreprocessor(),
+
+			// new ExtractGrammarFromTextPreprocessor(),
 
 			// new WordAnalysisPreprocessor(),
 			// new CharacterAnalysisPreprocessor(),

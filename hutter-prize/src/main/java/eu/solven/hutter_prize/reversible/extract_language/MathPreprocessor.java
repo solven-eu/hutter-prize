@@ -13,7 +13,7 @@ public class MathPreprocessor extends PatternExtractorPreprocessor {
 	// Mathematical formulas holds a lot of small words, which would prevent later abbreviation (e.g. replacing
 	// `because` by `bcz` is not possible if `bcz` word is consumed by a mathematical formulae
 	public MathPreprocessor() {
-		super("math_\\d+_", "&lt;math&gt;", "&lt;/math&gt;", "formulas");
+		super("MATH_\\d+_", "&lt;math&gt;", "&lt;/math&gt;", "formulas");
 	}
 
 }

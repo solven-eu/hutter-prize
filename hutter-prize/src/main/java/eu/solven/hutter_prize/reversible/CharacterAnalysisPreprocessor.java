@@ -19,7 +19,7 @@ import eu.solven.hutter_prize.HPUtils;
  * @author Benoit Lacelle
  * @see WordAnalysisPreprocessor
  */
-public class CharacterAnalysisPreprocessor extends ASymbolsPreprocessor {
+public class CharacterAnalysisPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CharacterAnalysisPreprocessor.class);
 
 	@Override

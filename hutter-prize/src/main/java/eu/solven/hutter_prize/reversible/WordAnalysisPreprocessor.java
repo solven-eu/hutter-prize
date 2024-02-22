@@ -18,7 +18,7 @@ import com.google.common.util.concurrent.AtomicLongMap;
  * @author Benoit Lacelle
  *
  */
-public class WordAnalysisPreprocessor extends ASymbolsPreprocessor {
+public class WordAnalysisPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WordAnalysisPreprocessor.class);
 
 	@Override

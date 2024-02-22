@@ -18,7 +18,10 @@ import me.lemire.integercompression.VariableByte;
  * table.
  * 
  * Typically `abcabc` is turned into `012012` and, given a cardinality of 3, hence a `1<<2` bits are necessary per
- * index, packed into `000110000110`
+ * index, packed into `000110000110`.
+ * 
+ * TODO Implement some optimal VariableByte encoding. e.g.
+ * https://pages.di.unipi.it/rossano/assets/pdf/papers/TKDE20.pdf
  * 
  * @author Benoit Lacelle
  *

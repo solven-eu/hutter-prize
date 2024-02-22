@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import eu.solven.hutter_prize.reversible.LexicalFieldPreprocessor;
+import eu.solven.hutter_prize.deprecated.LexicalFieldPreprocessor;
 import eu.solven.pepper.collection.PepperMapHelper;
 import eu.solven.pepper.resource.PepperResourceHelper;
 

@@ -200,12 +200,12 @@ public class TestSentenceStartsWithUCPreprocessor {
 
 	@Test
 	public void testBasic_oneLetter() throws IOException {
-		String page = "I am Benoit";
+		String page = "A b C d E";
 		// Assertions.assertThat(page).doesNotContain("math(0)").contains("10^{8 \\times 10^{16}}");
 
 		String compressed = (String) preProcessor.compress(page);
 
-		Assertions.assertThat(compressed).isEqualTo("i am Benoit");
+		Assertions.assertThat(compressed).isEqualTo("a b C d E");
 		//
 		// Assertions.assertThat(compressed.get("body").toString())
 		// .contains("math_0_")
@@ -270,6 +270,48 @@ public class TestSentenceStartsWithUCPreprocessor {
 		String compressed = (String) preProcessor.compress(page);
 
 		Assertions.assertThat(compressed).isEqualTo("jenny P. dFLC'Hericourt");
+		//
+		// Assertions.assertThat(compressed.get("body").toString())
+		// .contains("math_0_")
+		// .doesNotContain("10^{8 \\times 10^{16}}");
+		//
+		// Assertions.assertThat(compressed.get("formulas").toString()).contains("10^{8 \\times 10^{16}}");
+
+		{
+			String decompressed = (String) preProcessor.decompress(compressed);
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void testBasic_english_I_multipleLocations() throws IOException {
+		String page = "He is here, and I am here. I am still here";
+		// Assertions.assertThat(page).doesNotContain("math(0)").contains("10^{8 \\times 10^{16}}");
+
+		String compressed = (String) preProcessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("he is here, and I am here. I am still here");
+		//
+		// Assertions.assertThat(compressed.get("body").toString())
+		// .contains("math_0_")
+		// .doesNotContain("10^{8 \\times 10^{16}}");
+		//
+		// Assertions.assertThat(compressed.get("formulas").toString()).contains("10^{8 \\times 10^{16}}");
+
+		{
+			String decompressed = (String) preProcessor.decompress(compressed);
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void testBasic_english_I_alone() throws IOException {
+		String page = "I am here";
+		// Assertions.assertThat(page).doesNotContain("math(0)").contains("10^{8 \\times 10^{16}}");
+
+		String compressed = (String) preProcessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("I am here");
 		//
 		// Assertions.assertThat(compressed.get("body").toString())
 		// .contains("math_0_")

@@ -23,7 +23,7 @@ import com.google.common.base.Strings;
  * @author Benoit Lacelle
  *
  */
-public class AutocompleteWholeWordPreprocessor extends ASymbolsPreprocessor {
+public class AutocompleteWholeWordPreprocessor extends AStringColumnEditorPreprocessor {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AutocompleteWholeWordPreprocessor.class);
 
 	private static final boolean DEBUG = true;

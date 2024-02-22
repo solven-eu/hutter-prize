@@ -10,15 +10,26 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
+import eu.solven.hutter_prize.reversible.enwik.XmlToColumnarPreprocessor;
 import eu.solven.pepper.collection.PepperMapHelper;
 
 /**
+ * This helps processing the main text column, especially after {@link XmlToColumnarPreprocessor}.
  * 
  * @author Benoit Lacelle
  *
  */
-public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
-	public static final String KEY_TEXT = "text";
+public abstract class AStringColumnEditorPreprocessor implements IReversibleCompressor {
+
+	protected final String editedColumn;
+
+	public AStringColumnEditorPreprocessor(String readColumn) {
+		this.editedColumn = readColumn;
+	}
+
+	public AStringColumnEditorPreprocessor() {
+		this(XmlToColumnarPreprocessor.KEY_TEXT);
+	}
 
 	static interface IProcessString {
 		String compress(Map<String, ?> context, int index, String string);
@@ -49,7 +60,8 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 		if (compressed instanceof String) {
 			String string = (String) compressed;
 
-			return transformString.compress(optContext.orElse(Map.of()), -1, string);
+			return transformString
+					.compress(optContext.orElse(analyzeList(Collections.singletonList(string))), -1, string);
 		} else if (compressed instanceof List<?>) {
 			List<?> list = (List<?>) compressed;
 
@@ -97,7 +109,7 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 			if (asMap.containsKey("body")) {
 				String body = asMap.get("body").toString();
 
-				String simplifiedBody = transformString.compress(optContext.orElse(Map.of()), -1, body);
+				String simplifiedBody = (String) process(compressing, transformString, body, optContext);
 
 				// Make sure we let transit other information in other fields
 				Map<String, Object> output = new LinkedHashMap<>(asMap);
@@ -106,42 +118,26 @@ public abstract class ASymbolsPreprocessor implements IReversibleCompressor {
 				output.put("body", simplifiedBody);
 
 				return output;
-			} else if (asMap.containsKey(ColumnRepresentation.KEY_KEYTOVECTOR)) {
+			} else if (asMap.containsKey(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR)) {
 				assert optContext.isEmpty();
 
-				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, ColumnRepresentation.KEY_KEYTOVECTOR);
+				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, XmlToColumnarPreprocessor.KEY_KEYTOVECTOR);
 				Map<String, Object> keyToVectorOutput = new LinkedHashMap<>(keyToVector);
 
-				if (keyToVector.containsKey(KEY_TEXT)) {
-					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, KEY_TEXT);
+				if (keyToVector.containsKey(editedColumn)) {
+					List<String> texts = PepperMapHelper.getRequiredAs(keyToVector, editedColumn);
 					Map<String, ?> compressingContext =
-							compressing ? analyzeList(texts) : (Map<String, ?>) keyToContext.get(KEY_TEXT);
+							compressing ? analyzeList(texts) : (Map<String, ?>) keyToContext.get(editedColumn);
 					List<?> processedTexts =
 							(List<?>) process(compressing, transformString, texts, Optional.of(compressingContext));
-					keyToVectorOutput.put(KEY_TEXT, processedTexts);
+					keyToVectorOutput.put(editedColumn, processedTexts);
 					if (compressing) {
-						keyToContext.put(KEY_TEXT, compressingContext);
-					}
-				}
-
-				// https://github.com/amargaritov/starlit/blob/master/src/readalike_prepr/phda9_preprocess.h#L168
-				// For timestamps
-				if (keyToVector.containsKey("timestamp")) {
-					List<String> timestamps = PepperMapHelper.getRequiredAs(keyToVector, "timestamp");
-					Map<String, ?> compressingContext =
-							compressing ? analyzeList(timestamps) : (Map<String, ?>) keyToContext.get("timestamp");
-					List<String> processedTimestamps = (List<String>) process(compressing,
-							transformString,
-							timestamps,
-							Optional.of(compressingContext));
-					keyToVectorOutput.put("timestamp", processedTimestamps);
-					if (compressing) {
-						keyToContext.put("timestamp", compressingContext);
+						keyToContext.put(editedColumn, compressingContext);
 					}
 				}
 
 				Map<String, Object> decompressed = new LinkedHashMap<>(asMap);
-				decompressed.put(ColumnRepresentation.KEY_KEYTOVECTOR, keyToVectorOutput);
+				decompressed.put(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR, keyToVectorOutput);
 
 				if (compressing) {
 					if (!keyToContext.isEmpty()) {

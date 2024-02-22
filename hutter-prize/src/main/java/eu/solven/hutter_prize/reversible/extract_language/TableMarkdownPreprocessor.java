@@ -10,7 +10,7 @@ package eu.solven.hutter_prize.reversible.extract_language;
 public class TableMarkdownPreprocessor extends PatternExtractorPreprocessor {
 
 	public TableMarkdownPreprocessor() {
-		super("\\{tmd\\d+_", "\\{\\|", "\n\\|\\}", "tables_markdown");
+		super("TMD\\d+_", "\\{\\|", "\n\\|\\}", "tables_markdown");
 	}
 
 }

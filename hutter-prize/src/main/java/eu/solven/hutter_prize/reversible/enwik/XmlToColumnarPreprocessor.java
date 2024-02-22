@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.enwik;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,10 +35,11 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
  * @author Benoit Lacelle
  *
  */
-public class ColumnRepresentation implements IReversibleCompressor {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ColumnRepresentation.class);
+public class XmlToColumnarPreprocessor implements IReversibleCompressor {
+	private static final Logger LOGGER = LoggerFactory.getLogger(XmlToColumnarPreprocessor.class);
 
 	public static final String KEY_KEYTOVECTOR = "ColumnRepresentation.keyToVector";
+	public static final String KEY_TEXT = "text";
 
 	private Map<String, String> closerToColumn() {
 		Map<String, String> closerToColumn = new HashMap<>();
@@ -49,11 +50,11 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		closerToColumn.put("</timestamp>", "revision_timestamp");
 		closerToColumn.put("</username>", "revision_username");
 		closerToColumn.put("</id>\n      </contributor>", "revision_contributor_id");
-		closerToColumn.put("]]</text>\n    </revision>\n  </page>", "text");
+		closerToColumn.put("]]</text>\n    </revision>\n  </page>", KEY_TEXT);
 		closerToColumn.put("</timestamp>", "revision_timestamp");
 		closerToColumn.put("</restrictions>", "revision_restriction");
 		closerToColumn.put("</comment>", "comment");
-		closerToColumn.put("</text>\n    </revision>\n  </page>", "text");
+		closerToColumn.put("</text>\n    </revision>\n  </page>", KEY_TEXT);
 		closerToColumn.put("</ip>", "ip");
 		return closerToColumn;
 	}
@@ -109,7 +110,7 @@ public class ColumnRepresentation implements IReversibleCompressor {
 		keyToVector.put("revision_contributor_id", new IntArrayList(new int[countPages]));
 		keyToVector.put("revision_restriction", Arrays.asList(new String[countPages]));
 		keyToVector.put("comment", Arrays.asList(new String[countPages]));
-		keyToVector.put("text", Arrays.asList(new String[countPages]));
+		keyToVector.put(KEY_TEXT, Arrays.asList(new String[countPages]));
 
 		List<String> leftoverVector = Arrays.asList(new String[countPages]);
 		keyToVector.put("leftovers", leftoverVector);

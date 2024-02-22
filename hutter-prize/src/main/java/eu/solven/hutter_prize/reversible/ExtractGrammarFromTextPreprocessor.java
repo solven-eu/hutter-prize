@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
+import eu.solven.hutter_prize.reversible.enwik.XmlToColumnarPreprocessor;
 
 /**
  * Turns `Je m'appele Benoit` into `Ww'wP` and `Je\nm\nappele\nBenoit`
@@ -31,12 +32,12 @@ public class ExtractGrammarFromTextPreprocessor implements IReversibleCompressor
 		}
 		Map<String, Object> map = new LinkedHashMap<>((Map<String, Object>) input);
 
-		Map<String, ?> vectors = (Map<String, ?>) map.get(ColumnRepresentation.KEY_KEYTOVECTOR);
+		Map<String, ?> vectors = (Map<String, ?>) map.get(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR);
 
 		Map<String, Object> newVectors = new LinkedHashMap<>(vectors);
-		map.put(ColumnRepresentation.KEY_KEYTOVECTOR, newVectors);
+		map.put(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR, newVectors);
 
-		List<String> texts = (List<String>) newVectors.remove(ASymbolsPreprocessor.KEY_TEXT);
+		List<String> texts = (List<String>) newVectors.remove(XmlToColumnarPreprocessor.KEY_TEXT);
 
 		List<String> grammars = new ArrayList<>();
 		newVectors.put("grammar", grammars);
@@ -83,16 +84,16 @@ public class ExtractGrammarFromTextPreprocessor implements IReversibleCompressor
 		}
 		Map<String, Object> map = new LinkedHashMap<>((Map<String, Object>) output);
 
-		Map<String, ?> vectors = (Map<String, ?>) map.remove(ColumnRepresentation.KEY_KEYTOVECTOR);
+		Map<String, ?> vectors = (Map<String, ?>) map.remove(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR);
 
 		Map<String, Object> newVectors = new LinkedHashMap<>(vectors);
-		map.put(ColumnRepresentation.KEY_KEYTOVECTOR, newVectors);
+		map.put(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR, newVectors);
 
 		List<String> grammars = (List<String>) newVectors.remove("grammar");
 		List<List<String>> textIndexToWords = (List<List<String>>) newVectors.remove("words");
 
 		List<String> texts = new ArrayList<>();
-		newVectors.put(ASymbolsPreprocessor.KEY_TEXT, texts);
+		newVectors.put(XmlToColumnarPreprocessor.KEY_TEXT, texts);
 
 		Iterator<List<String>> wordsIterator = textIndexToWords.iterator();
 

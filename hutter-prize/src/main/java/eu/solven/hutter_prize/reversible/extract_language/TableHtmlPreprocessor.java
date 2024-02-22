@@ -10,7 +10,7 @@ package eu.solven.hutter_prize.reversible.extract_language;
 public class TableHtmlPreprocessor extends PatternExtractorPreprocessor {
 
 	public TableHtmlPreprocessor() {
-		super("\\{thtml\\d+_", "<table", "\n</table>", "tables_html");
+		super("THTML\\d+_", "<table", "\n</table>", "tables_html");
 	}
 
 }

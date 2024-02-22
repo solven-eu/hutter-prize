@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * 
  * @author Benoit Lacelle
  */
-public class CharacterEncodingPreprocessor extends ASymbolsPreprocessor {
+public class CharacterEncodingPreprocessor extends AStringColumnEditorPreprocessor {
 	@Override
 	protected String compressString(Map<String, ?> context, int index, String string) {
 		if (string.contains("&$")) {

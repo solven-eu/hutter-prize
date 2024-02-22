@@ -10,7 +10,7 @@ public class ImageRefPreprocessor extends PatternExtractorPreprocessor {
 	public ImageRefPreprocessor() {
 		super(
 				// UpperCase to prevent interactions with SentenceStartsWithUCPreprocessor
-				"Img\\d+_",
+				"IMG\\d+_",
 				"\\[\\[Image:",
 				"\\]\\]",
 				"imageRefs");
