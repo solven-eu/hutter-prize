@@ -1,14 +1,11 @@
 package eu.solven.hutter_prize.reversible;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PrimitiveIterator.OfInt;
 import java.util.Set;
 import java.util.TreeMap;
@@ -22,12 +19,13 @@ import org.slf4j.LoggerFactory;
 import com.google.common.util.concurrent.AtomicLongMap;
 
 import eu.solven.hutter_prize.HPUtils;
+import eu.solven.hutter_prize.reversible.analysis.CharactersBlockAnalysisPreprocessor;
 
 /**
  * Like phd9 but more advanced patterns, and replacing with weirder characters
  * 
  * @author Benoit Lacelle
- *
+ * @see CharactersBlockAnalysisPreprocessor
  */
 // https://github.com/amargaritov/starlit/blob/master/src/readalike_prepr/phda9_preprocess.h
 public class Phd9AdvancedPreprocessor extends Phd9Preprocessor {

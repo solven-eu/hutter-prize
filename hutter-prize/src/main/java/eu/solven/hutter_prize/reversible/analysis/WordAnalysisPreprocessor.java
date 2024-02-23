@@ -1,4 +1,4 @@
-package eu.solven.hutter_prize.reversible;
+package eu.solven.hutter_prize.reversible.analysis;
 
 import java.util.Comparator;
 import java.util.List;
@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AtomicLongMap;
+
+import eu.solven.hutter_prize.reversible.AStringColumnEditorPreprocessor;
 
 /**
  * We analyze word frequency to produce a relevant dictionary

@@ -31,7 +31,7 @@ public abstract class AStringColumnEditorPreprocessor implements IReversibleComp
 		this(XmlToColumnarPreprocessor.KEY_TEXT);
 	}
 
-	static interface IProcessString {
+	protected static interface IProcessString {
 		String compress(Map<String, ?> context, int index, String string);
 	}
 
@@ -61,7 +61,7 @@ public abstract class AStringColumnEditorPreprocessor implements IReversibleComp
 			String string = (String) compressed;
 
 			return transformString
-					.compress(optContext.orElse(analyzeList(Collections.singletonList(string))), -1, string);
+					.compress(optContext.orElseGet(() -> analyzeList(Collections.singletonList(string))), -1, string);
 		} else if (compressed instanceof List<?>) {
 			List<?> list = (List<?>) compressed;
 
@@ -109,7 +109,16 @@ public abstract class AStringColumnEditorPreprocessor implements IReversibleComp
 			if (asMap.containsKey("body")) {
 				String body = asMap.get("body").toString();
 
-				String simplifiedBody = (String) process(compressing, transformString, body, optContext);
+				Map<String, ?> compressingContext =
+						optContext.orElseGet(() -> compressing ? analyzeList(Collections.singletonList(body))
+								: (Map<String, ?>) keyToContext.get(editedColumn));
+
+				String simplifiedBody =
+						(String) process(compressing, transformString, body, Optional.of(compressingContext));
+
+				if (compressing) {
+					keyToContext.put(editedColumn, compressingContext);
+				}
 
 				// Make sure we let transit other information in other fields
 				Map<String, Object> output = new LinkedHashMap<>(asMap);
@@ -117,11 +126,20 @@ public abstract class AStringColumnEditorPreprocessor implements IReversibleComp
 				// We preprocessed body
 				output.put("body", simplifiedBody);
 
+				if (compressing) {
+					if (!keyToContext.isEmpty()) {
+						output.put(contextKey, keyToContext);
+					}
+				} else {
+					output.remove(contextKey);
+				}
+
 				return output;
 			} else if (asMap.containsKey(XmlToColumnarPreprocessor.KEY_KEYTOVECTOR)) {
 				assert optContext.isEmpty();
 
-				Map<String, ?> keyToVector = PepperMapHelper.getRequiredAs(asMap, XmlToColumnarPreprocessor.KEY_KEYTOVECTOR);
+				Map<String, ?> keyToVector =
+						PepperMapHelper.getRequiredAs(asMap, XmlToColumnarPreprocessor.KEY_KEYTOVECTOR);
 				Map<String, Object> keyToVectorOutput = new LinkedHashMap<>(keyToVector);
 
 				if (keyToVector.containsKey(editedColumn)) {
