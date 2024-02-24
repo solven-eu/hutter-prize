@@ -15,8 +15,6 @@ limitations under the License.
 
 package eu.solven.hutter_prize.kanzi_only;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,7 +33,6 @@ import kanzi.Error;
 import kanzi.Event;
 import kanzi.Listener;
 import kanzi.SliceByteArray;
-import kanzi.app.BlockCompressor;
 import kanzi.app.InfoPrinter;
 import kanzi.io.CompressedOutputStream;
 import kanzi.transform.TransformFactory;
@@ -564,41 +560,6 @@ public class InputStreamCompressor implements Runnable, Callable<Integer>
 
          if (this.cos != null)
             this.cos.close();
-      }
-   }
-
-
-   static class FileCompressWorker implements Callable<InputStreamCompressResult>
-   {
-      private final ArrayBlockingQueue<InputStreamCompressTask> queue;
-
-
-      public FileCompressWorker(ArrayBlockingQueue<InputStreamCompressTask> queue)
-      {
-         this.queue = queue;
-      }
-
-      @Override
-      public InputStreamCompressResult call() throws Exception
-      {
-         int res = 0;
-         long read = 0;
-         long written = 0;
-
-         while (res == 0)
-         {
-           InputStreamCompressTask task = this.queue.poll();
-
-            if (task == null)
-               break;
-
-            InputStreamCompressResult result = task.call();
-            res = result.code;
-            read += result.read;
-            written += result.written;
-         }
-
-         return new InputStreamCompressResult(res, read, written);
       }
    }
 

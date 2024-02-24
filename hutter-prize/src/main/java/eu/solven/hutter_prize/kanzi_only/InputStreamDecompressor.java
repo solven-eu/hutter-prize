@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -401,39 +400,6 @@ public class InputStreamDecompressor implements Runnable, Callable<Integer>
 
          if (this.os != null)
             this.os.close();
-      }
-   }
-
-
-
-   static class FileDecompressWorker implements Callable<ByteArrayDecompressResult>
-   {
-      private final ArrayBlockingQueue<ByteArrayDecompressTask> queue;
-
-      public FileDecompressWorker(ArrayBlockingQueue<ByteArrayDecompressTask> queue)
-      {
-         this.queue = queue;
-      }
-
-      @Override
-      public ByteArrayDecompressResult call() throws Exception
-      {
-         int res = 0;
-         long read = 0;
-
-         while (res == 0)
-         {
-            ByteArrayDecompressTask task = this.queue.poll();
-
-            if (task == null)
-               break;
-
-            ByteArrayDecompressResult result = task.call();
-            res = result.code;
-            read += result.read;
-         }
-
-         return new ByteArrayDecompressResult(res, read);
       }
    }
 }

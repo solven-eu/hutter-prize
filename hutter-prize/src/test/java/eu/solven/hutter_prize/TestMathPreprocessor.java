@@ -15,7 +15,7 @@ public class TestMathPreprocessor {
 
 	@Test
 	public void testGoogol() throws IOException {
-		String page = PepperResourceHelper.loadAsString("/pages/googol");
+		String page = PepperResourceHelper.loadAsString("/pages/Googol");
 		Assertions.assertThat(page).hasSize(5482);
 
 		Assertions.assertThat(page).doesNotContain("math(0)").contains("10^{8 \\times 10^{16}}");

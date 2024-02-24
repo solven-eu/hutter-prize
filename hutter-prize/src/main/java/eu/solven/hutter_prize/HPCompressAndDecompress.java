@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import eu.solven.hutter_prize.reversible.ExtractGrammarFromTextPreprocessor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
+import eu.solven.hutter_prize.reversible.analysis.CharactersBlockAnalysisPreprocessor;
 import eu.solven.hutter_prize.reversible.analysis.StemAnalysisPreprocessor;
 import eu.solven.hutter_prize.reversible.enwik.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.enwik.XmlToColumnarPreprocessor;
@@ -115,7 +116,9 @@ public class HPCompressAndDecompress {
 			new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
-			new StemAnalysisPreprocessor(),
+			new CharactersBlockAnalysisPreprocessor(),
+			
+//			new StemAnalysisPreprocessor(),
 
 			// new ExtractGrammarFromTextPreprocessor(),
 
