@@ -7,11 +7,9 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.solven.hutter_prize.reversible.ExtractGrammarFromTextPreprocessor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
 import eu.solven.hutter_prize.reversible.analysis.CharactersBlockAnalysisPreprocessor;
-import eu.solven.hutter_prize.reversible.analysis.StemAnalysisPreprocessor;
 import eu.solven.hutter_prize.reversible.enwik.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.enwik.XmlToColumnarPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.AlphabetManyPreprocessor;
@@ -116,7 +114,7 @@ public class HPCompressAndDecompress {
 			new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
-			new CharactersBlockAnalysisPreprocessor(),
+//			new CharactersBlockAnalysisPreprocessor(),
 			
 //			new StemAnalysisPreprocessor(),
 

@@ -359,6 +359,10 @@ public class InputStreamCompressor implements Runnable, Callable<Integer>
         case 9 :
            return "EXE+RLT+TEXT+UTF&TPAQX";
 
+           // Custom
+        case 10 :
+           return "EXE+RLT+TEXT+UTF&TPAQX";
+
         default :
            return "Unknown&Unknown";
       }

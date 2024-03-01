@@ -40,7 +40,9 @@ public class KanziPreprocessorWrapper implements IReversibleCompressor {
 		byte skipFlags = sequence.getSkipFlags();
 		dst.array[0] = skipFlags;
 
-		return Arrays.copyOfRange(dst.array, 0, 1 + dst.index);
+		// No need to copy as this is a private copy, and there is no compression so no trail to trim
+		// return Arrays.copyOfRange(dst.array, 0, dst.index);
+		return dst.array;
 	}
 
 	@Override
@@ -49,7 +51,7 @@ public class KanziPreprocessorWrapper implements IReversibleCompressor {
 
 		SliceByteArray src = new SliceByteArray(bytes, bytes.length - 1, 1);
 
-		SliceByteArray dst = new SliceByteArray(new byte[bytes.length], 0);
+		SliceByteArray dst = new SliceByteArray(new byte[bytes.length - 1], 0);
 
 		sequence.setSkipFlags(bytes[0]);
 		boolean done = sequence.inverse(src, dst);
@@ -58,8 +60,8 @@ public class KanziPreprocessorWrapper implements IReversibleCompressor {
 			throw new IllegalStateException("Not done");
 		}
 
-		byte[] decompressed = Arrays.copyOfRange(dst.array, dst.index, dst.index + dst.length);
-		return new String(decompressed, StandardCharsets.UTF_8);
+		// byte[] decompressed = Arrays.copyOfRange(dst.array, dst.index, dst.index + dst.length);
+		return new String(dst.array, StandardCharsets.UTF_8);
 	}
 
 }

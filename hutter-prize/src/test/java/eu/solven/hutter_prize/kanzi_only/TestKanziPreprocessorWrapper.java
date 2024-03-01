@@ -1,6 +1,7 @@
 package eu.solven.hutter_prize.kanzi_only;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
@@ -15,10 +16,11 @@ public class TestKanziPreprocessorWrapper {
 	@Test
 	public void testGoogol() throws IOException {
 		String page = PepperResourceHelper.loadAsString("/pages/Googol");
-		Assertions.assertThat(page).hasSize(5482);
+		Assertions.assertThat(page.getBytes(StandardCharsets.UTF_8)).hasSize(5509);
 
 		byte[] compressed = (byte[]) preprocessor.compress(page);
-		// Assertions.assertThat(compressed).hasSize(5510);
+		// A prefix byte holds the flag if the compressor has been executed or not
+		Assertions.assertThat(compressed).hasSize(5510);
 
 		{
 			String decompressed = (String) preprocessor.decompress(compressed);
