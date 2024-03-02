@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.assertj.core.api.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import eu.solven.hutter_prize.reversible.SymbolsAutoClose;
@@ -19,7 +20,7 @@ public class TestSymbolsAutoClosePreprocessor {
 		Assertions.assertThat(page).hasSize(5482);
 
 		Map<String, ?> compressed = (Map<String, ?>) preprocessor.compress(Map.of("body", page));
-		Assertions.assertThat(PepperMapHelper.getRequiredString(compressed, "body")).hasSize(5461);
+		Assertions.assertThat(PepperMapHelper.getRequiredString(compressed, "body")).hasSize(5401);
 
 		{
 			Map<String, ?> decompressed = (Map<String, ?>) preprocessor.decompress(compressed);
@@ -93,8 +94,60 @@ public class TestSymbolsAutoClosePreprocessor {
 			Assertions.assertThat(decompressed).isEqualTo(page);
 		}
 	}
-	
-	
+
+	@Test
+	public void testParenthesis() throws IOException {
+		String page = "followed by one hundred [[0 (number)|zero]]s.";
+		String compressed = (String) preprocessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("followed by one hundred [[0 (number)|zero]]s.");
+
+		{
+			String decompressed = preprocessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void testColumn() throws IOException {
+		String page = "[[da:Googol]]";
+		String compressed = (String) preprocessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("[[da:Googol");
+
+		{
+			String decompressed = preprocessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	// @Ignore("TODO")
+	@Test
+	public void testConsecutive() throws IOException {
+		String page = "the quiz show on [[10 September]] [[2001]].";
+		String compressed = (String) preprocessor.compress(page);
+
+		Assertions.assertThat(compressed).isEqualTo("the quiz show on [[10 September [[2001.");
+
+		{
+			String decompressed = preprocessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
+	public void testConsecutive_2() throws IOException {
+		String page = "The Internet [[search engine]] [[Google]] was named after this number.";
+		String compressed = (String) preprocessor.compress(page);
+
+		Assertions.assertThat(compressed)
+				.isEqualTo("The Internet [[search engine [[Google]] was named after this number.");
+
+		{
+			String decompressed = preprocessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
 
 	@Test
 	public void testNotClosed() throws IOException {
