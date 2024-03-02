@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
-import eu.solven.hutter_prize.reversible.analysis.CharactersBlockAnalysisPreprocessor;
+import eu.solven.hutter_prize.reversible.SymbolsAutoClose;
 import eu.solven.hutter_prize.reversible.enwik.HeaderArticlesFooter;
 import eu.solven.hutter_prize.reversible.enwik.XmlToColumnarPreprocessor;
-import eu.solven.hutter_prize.reversible.extract_language.AlphabetManyPreprocessor;
+import eu.solven.hutter_prize.reversible.extract_language.AlphabetSomePreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.ImageLowercaseRefPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.ImageRefPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.MathPreprocessor;
@@ -42,66 +42,63 @@ public class HPCompressAndDecompress {
 			new TableMarkdownPreprocessor(),
 			new TableHtmlPreprocessor(),
 
-			// new AlphabetSomePreprocessor("ko"),
-			// new AlphabetSomePreprocessor("ja"),
-			// new AlphabetSomePreprocessor("zh"),
-			// new AlphabetSomePreprocessor("zh-min-nan"),
-			// new AlphabetSomePreprocessor("ar"),
-			// new AlphabetSomePreprocessor("ru"),
-			// new AlphabetSomePreprocessor("uk"),
-			// new AlphabetSomePreprocessor("el"),
-			// new AlphabetSomePreprocessor("bg"),
-			// new AlphabetSomePreprocessor("bn"),
-			// new AlphabetSomePreprocessor("he"),
-			// new AlphabetSomePreprocessor("os"),
-			// new AlphabetSomePreprocessor("fa"),
-			// new AlphabetSomePreprocessor("hi"),
-			// new AlphabetSomePreprocessor("th"),
-			// new AlphabetSomePreprocessor("mk"),
-			// new AlphabetSomePreprocessor("ka"),
-			// new AlphabetSomePreprocessor("sa"),
-			// new AlphabetSomePreprocessor("yi"),
-			// new AlphabetSomePreprocessor("ta"),
-			// new AlphabetSomePreprocessor("gu"),
-			// new AlphabetSomePreprocessor("sr"),
-			// new AlphabetSomePreprocessor("vi"),
-			// new AlphabetSomePreprocessor("tr"),
-			// new AlphabetSomePreprocessor("be"),
+			new AlphabetSomePreprocessor("ko"),
+			new AlphabetSomePreprocessor("ja"),
+			new AlphabetSomePreprocessor("zh"),
+			new AlphabetSomePreprocessor("zh-min-nan"),
+			new AlphabetSomePreprocessor("ar"),
+			new AlphabetSomePreprocessor("ru"),
+			new AlphabetSomePreprocessor("uk"),
+			new AlphabetSomePreprocessor("el"),
+			new AlphabetSomePreprocessor("bg"),
+			new AlphabetSomePreprocessor("bn"),
+			new AlphabetSomePreprocessor("he"),
+			new AlphabetSomePreprocessor("os"),
+			new AlphabetSomePreprocessor("fa"),
+			new AlphabetSomePreprocessor("hi"),
+			new AlphabetSomePreprocessor("th"),
+			new AlphabetSomePreprocessor("mk"),
+			new AlphabetSomePreprocessor("ka"),
+			new AlphabetSomePreprocessor("sa"),
+			new AlphabetSomePreprocessor("yi"),
+			new AlphabetSomePreprocessor("ta"),
+			new AlphabetSomePreprocessor("gu"),
+			new AlphabetSomePreprocessor("sr"),
+			new AlphabetSomePreprocessor("vi"),
+			new AlphabetSomePreprocessor("tr"),
+			new AlphabetSomePreprocessor("be"),
 
 			// We replace many individual `AlphabetSomePreprocessor` by a single AlphabetManyPreprocessor. It is faster
 			// (as single pass) and it impacts the text vector just the same. The output file is different as it would
 			// mix all languages: it is acceptable as long as we do not compress the otherAlphabet file.
-			new AlphabetManyPreprocessor("ko",
-					"ja",
-					"zh",
-					"zh-min-nan",
-					"ar",
-					"ru",
-					"uk",
-					"el",
-					"bg",
-					"bn",
-					"he",
-					"os",
-					"fa",
-					"hi",
-					"th",
-					"mk",
-					"ka",
-					"sa",
-					"yi",
-					"ta",
-					"gu",
-					"sr",
-					"vi",
-					"tr",
-					"be"),
+			// new AlphabetManyPreprocessor("ko",
+			// "ja",
+			// "zh",
+			// "zh-min-nan",
+			// "ar",
+			// "ru",
+			// "uk",
+			// "el",
+			// "bg",
+			// "bn",
+			// "he",
+			// "os",
+			// "fa",
+			// "hi",
+			// "th",
+			// "mk",
+			// "ka",
+			// "sa",
+			// "yi",
+			// "ta",
+			// "gu",
+			// "sr",
+			// "vi",
+			// "tr",
+			// "be"),
 
 			// After alphabets as they rely on the `[[al:Youpi]]` syntax
 			// new SkipClosingBrackets(),
-
-			// This will turn `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
-			new SentenceStartsWithUCPreprocessor(),
 
 			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
 			new XmlToColumnarPreprocessor(),
@@ -114,9 +111,13 @@ public class HPCompressAndDecompress {
 			new Phd9Preprocessor(),
 			// new Phd9AdvancedPreprocessor(),
 
-//			new CharactersBlockAnalysisPreprocessor(),
-			
-//			new StemAnalysisPreprocessor(),
+			// This will turn `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
+			new SentenceStartsWithUCPreprocessor(),
+			new SymbolsAutoClose(),
+
+			// new CharactersBlockAnalysisPreprocessor(),
+
+			// new StemAnalysisPreprocessor(),
 
 			// new ExtractGrammarFromTextPreprocessor(),
 

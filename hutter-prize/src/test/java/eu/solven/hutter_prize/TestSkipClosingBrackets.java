@@ -15,12 +15,13 @@ import eu.solven.hutter_prize.reversible.SkipClosingBrackets;
 import eu.solven.hutter_prize.reversible.utilities.CompositeReversibleCompressor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
+@Deprecated
 public class TestSkipClosingBrackets {
 	final IReversibleCompressor preProcessor = new SkipClosingBrackets();
 
 	@Test
 	public void testGoogol() throws IOException {
-		String page = PepperResourceHelper.loadAsString("/pages/googol");
+		String page = PepperResourceHelper.loadAsString("/pages/Googol");
 
 		Map<String, ?> compressed = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
 
@@ -50,6 +51,7 @@ public class TestSkipClosingBrackets {
 			Map<String, ?> decompressed = (Map<String, ?>) preProcessor.decompress(compressed);
 			String decompressedBody = decompressed.get("body").toString();
 
+			Assertions.assertThat(decompressedBody).isEqualTo(page);
 		}
 	}
 

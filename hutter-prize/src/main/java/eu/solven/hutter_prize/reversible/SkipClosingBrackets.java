@@ -15,7 +15,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
  * Turns `[[SomeWord]]` into `[[8SomeWord`
  * 
  * @author Benoit Lacelle
+ * @see SymbolsAutoClose
  */
+@Deprecated(since = "SymbolsAutoClose is better")
 public class SkipClosingBrackets extends AStringColumnEditorPreprocessor {
 	private static final String ESCAPE = "_";
 
