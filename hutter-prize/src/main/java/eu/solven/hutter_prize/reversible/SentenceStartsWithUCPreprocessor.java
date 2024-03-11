@@ -47,21 +47,21 @@ public class SentenceStartsWithUCPreprocessor extends AStringColumnEditorPreproc
 		// A proper noun starts with upperCase without being start of sentence
 		AtomicLongMap<String> properNounToCount = getProperNounToCount(string);
 
-		String replaced = Pattern.compile("(?<=(\\. )|\\v ?|^)[a-zA-Z]+").matcher(string).replaceAll(mr -> {
-			String firstWord = mr.group();
+		String replaced = Pattern.compile("(?<=([a-z]\\. )|\\v ?|^)[a-zA-Z]+").matcher(string).replaceAll(mr -> {
+			String wordAfterDot = mr.group();
 
-			if (properNounToCount.containsKey(firstWord)) {
-				return firstWord;
+			if (properNounToCount.containsKey(wordAfterDot)) {
+				return wordAfterDot;
 			} else {
 
-				if (firstWord.endsWith(MAGIC_SUFFIX)) {
+				if (wordAfterDot.endsWith(MAGIC_SUFFIX)) {
 					throw new IllegalArgumentException("TODO Escape words with improper case and ending with `LC`");
 				}
 
-				int firstCodepoint = firstWord.codePointAt(0);
+				int firstCodepoint = wordAfterDot.codePointAt(0);
 
 				if (Character.isUpperCase(firstCodepoint)) {
-					return Character.toString(Character.toLowerCase(firstCodepoint)) + firstWord.substring(1);
+					return Character.toString(Character.toLowerCase(firstCodepoint)) + wordAfterDot.substring(1);
 				}
 
 				// if (firstWord.startsWith("image")) {
@@ -69,7 +69,7 @@ public class SentenceStartsWithUCPreprocessor extends AStringColumnEditorPreproc
 				// }
 
 				// We expected an upperCase but it is not the case: we need to escape this exception
-				return firstWord + MAGIC_SUFFIX;
+				return wordAfterDot + MAGIC_SUFFIX;
 
 			}
 		});
@@ -84,7 +84,7 @@ public class SentenceStartsWithUCPreprocessor extends AStringColumnEditorPreproc
 		// System.out.println();
 		// }
 
-		String replaced = Pattern.compile("(?<=(\\. )|\\v ?|^)[a-zA-Z]+").matcher(string).replaceAll(mr -> {
+		String replaced = Pattern.compile("(?<=([a-z]\\. )|\\v ?|^)[a-zA-Z]+").matcher(string).replaceAll(mr -> {
 			String firstWord = mr.group();
 
 			if (properNounToCount.containsKey(firstWord)) {

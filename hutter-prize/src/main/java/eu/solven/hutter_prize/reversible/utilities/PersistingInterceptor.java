@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
+import eu.solven.hutter_prize.kanzi_only.KanziCompressor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 
@@ -63,10 +64,10 @@ public class PersistingInterceptor implements IReversibleCompressor {
 
 							zipOutputStream.closeEntry();
 						}
+
 					} catch (IOException e) {
 						throw new UncheckedIOException("Issue persisting " + p, e);
 					}
-
 				});
 			}
 		}
@@ -115,6 +116,11 @@ public class PersistingInterceptor implements IReversibleCompressor {
 				LOGGER.warn("Not managed: {} {} given {}", k, v.getClass().getSimpleName(), parentFolder);
 			}
 		});
+
+		if (parentFolder.toFile().list().length == 0) {
+			// Not a single file has been written: remove the empty folder
+			parentFolder.toFile().delete();
+		}
 	}
 
 	private void persistCollection(String k, Path outputPath, Collection<?> intList, BiConsumer<Path, byte[]> consume) {

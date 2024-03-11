@@ -15,6 +15,7 @@ import eu.solven.hutter_prize.reversible.utilities.AVisitingCompressor;
  *
  */
 public class KanziCompressor extends AVisitingCompressor<byte[], byte[]> {
+	// From 0 to 9
 	final int level;
 
 	final boolean toSingleByteArray;
@@ -31,16 +32,21 @@ public class KanziCompressor extends AVisitingCompressor<byte[], byte[]> {
 		this.toSingleByteArray = true;
 	}
 
-	@Override
-	public byte[] defaultCompress(Object input) throws IOException {
-		ByteArrayInputStream bytes = new ByteArrayInputStream((byte[]) input);
-
+	private Map<String, Object> kanziOptions() {
 		Map<String, Object> commonOptions = new HashMap<>();
 		// Best compression as we consider having unlimited time
 		commonOptions.put("level", level);
 
 		// From 0 to 3 (or more?)
 		commonOptions.put("verbose", 0);
+		return commonOptions;
+	}
+
+	@Override
+	public byte[] defaultCompress(Object input) throws IOException {
+		ByteArrayInputStream bytes = new ByteArrayInputStream((byte[]) input);
+
+		Map<String, Object> commonOptions = kanziOptions();
 
 		ByteArrayOutputStream compressed = new ByteArrayOutputStream();
 		{
@@ -65,12 +71,7 @@ public class KanziCompressor extends AVisitingCompressor<byte[], byte[]> {
 	public byte[] defaultDecompress(Object output) throws IOException {
 		ByteArrayInputStream compressed = new ByteArrayInputStream((byte[]) output);
 
-		Map<String, Object> commonOptions = new HashMap<>();
-		// Best compression as we consider having unlimited time
-		commonOptions.put("level", 9);
-
-		// From 0 to 3 (or more?)
-		commonOptions.put("verbose", 0);
+		Map<String, Object> commonOptions = kanziOptions();
 
 		ByteArrayOutputStream decompressed = new ByteArrayOutputStream();
 		{

@@ -2,12 +2,10 @@ package eu.solven.hutter_prize.kanzi_only;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import eu.solven.hutter_prize.IReversibleCompressor;
 import kanzi.ByteTransform;
 import kanzi.SliceByteArray;
-import kanzi.transform.BWT;
 import kanzi.transform.Sequence;
 import kanzi.transform.TextCodec;
 

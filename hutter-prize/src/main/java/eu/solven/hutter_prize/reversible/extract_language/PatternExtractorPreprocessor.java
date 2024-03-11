@@ -1,7 +1,6 @@
 package eu.solven.hutter_prize.reversible.extract_language;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -57,7 +56,7 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 		String pages = (String) asMap.get("body");
 
 		// Collect all `mathXXX` words once and for all
-		Map.Entry<String, Map<String, String>> compressed = processString(pages);
+		Map.Entry<String, Map<Integer, String>> compressed = processString(pages);
 
 		LOGGER.info("Input with `{}` has been turned from length={} to length={}",
 				mapKey,
@@ -76,12 +75,14 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 		return output;
 	}
 
-	private Map.Entry<String, Map<String, String>> processString(String string) {
+	private Map.Entry<String, Map<Integer, String>> processString(String string) {
 
 		AtomicInteger mathIndex = new AtomicInteger();
-		Map<String, String> shortcutToFormula = new HashMap<>();
 
-		Set<String> mathWordsAlreadyPresent = lookForExistingShortcuts(patternWords, string);
+		// Linked for nice order in the persisted file
+		Map<Integer, String> shortcutToFormula = new LinkedHashMap<>();
+
+		Set<String> symbolWordsAlreadyPresent = lookForExistingShortcuts(patternWords, string);
 
 		// https://javascript.info/regexp-greedy-and-lazy
 		Matcher matcher = Pattern.compile(openMath + "(.*?)" + closeMath, Pattern.DOTALL).matcher(string);
@@ -89,16 +90,14 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 		String replacedString = matcher.replaceAll(mr -> {
 			String rawMath = mr.group();
 
-			// String formula = mr.group(1);
-
-			String shortcut = popShortcut(mathIndex, mathWordsAlreadyPresent);
+			Map.Entry<Integer, String> shortcut = popShortcut(mathIndex, symbolWordsAlreadyPresent);
 
 			String cleanPrefix = regexToQuoted(openMath);
 			String cleanSuffix = regexToQuoted(closeMath);
 			String formula = rawMath.substring(cleanPrefix.length(), rawMath.length() - cleanSuffix.length());
-			shortcutToFormula.put(shortcut, formula);
+			shortcutToFormula.put(shortcut.getKey(), formula);
 
-			return shortcut;
+			return shortcut.getValue();
 		});
 
 		LOGGER.info("We detected {} {} entries. {} distinct",
@@ -124,19 +123,37 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 				.replace("\\|", "|");
 	}
 
-	private String popShortcut(AtomicInteger mathIndex, Set<String> mathWordsAlreadyPresent) {
+	private Map.Entry<Integer, String> popShortcut(AtomicInteger mathIndex, Set<String> mathWordsAlreadyPresent) {
+
+		// Find an index so that the word does not exist
+		while (mathWordsAlreadyPresent.contains(indexToShortcut(mathIndex.get()))) {
+			mathIndex.incrementAndGet();
+		}
+
+		int outputIndex = mathIndex.getAndIncrement();
+		String shortcut = indexToShortcut(outputIndex);
+		return Map.entry(outputIndex, shortcut);
+	}
+
+	private String indexToShortcut(int index) {
 		int indexDigits = rawPatternWords.indexOf("\\d+");
 
 		String prefix = regexToQuoted(rawPatternWords.substring(0, indexDigits));
 		String suffix = regexToQuoted(rawPatternWords.substring(indexDigits + "\\d+".length()));
 
-		// Find an index so that the word does not exist
-		while (mathWordsAlreadyPresent.contains(prefix + mathIndex.get() + suffix)) {
-			mathIndex.incrementAndGet();
-		}
+		return prefix + index + suffix;
+	}
 
-		String shortcut = prefix + mathIndex.getAndIncrement() + suffix;
-		return shortcut;
+	private int shortcutToIndex(String shortcut) {
+		int indexDigits = rawPatternWords.indexOf("\\d+");
+
+		String prefix = regexToQuoted(rawPatternWords.substring(0, indexDigits));
+		String suffix = regexToQuoted(rawPatternWords.substring(indexDigits + "\\d+".length()));
+
+		assert shortcut.startsWith(prefix);
+		assert shortcut.endsWith(suffix);
+
+		return Integer.parseInt(shortcut.substring(prefix.length(), shortcut.length() - suffix.length()));
 	}
 
 	@Override
@@ -149,23 +166,18 @@ public class PatternExtractorPreprocessor implements IReversibleCompressor {
 		Map<String, Object> input = new LinkedHashMap<>(asMap);
 
 		// We extracted part of `body` into `math`
-		input.remove(mapKey);
-		input.put("body", restoreMath(pages, (Map<String, String>) asMap.get(mapKey)));
+		Map<Integer, String> mapping = (Map<Integer, String>) input.remove(mapKey);
+		input.put("body", restorePattern(pages, mapping));
 
 		return input;
 	}
 
-	private String restoreMath(String string, Map<String, String> shortcutToFormula) {
-		// for (Entry<String, String> entry : mathToShortcut.entrySet()) {
-		// String shortcut = entry.getValue();
-		// String math = openMath + entry.getKey() + closeMath;
-		// string = string.replaceAll(Pattern.quote(shortcut), Matcher.quoteReplacement(math));
-		// }
-
+	private String restorePattern(String string, Map<Integer, String> shortcutToFormula) {
 		String replacedString = patternWords.matcher(string).replaceAll(mr -> {
 			String shortcut = mr.group();
+			int shortcutIndex = shortcutToIndex(shortcut);
 
-			String formula = shortcutToFormula.get(shortcut);
+			String formula = shortcutToFormula.get(shortcutIndex);
 
 			if (formula == null) {
 				// This was a `mathXXX` word already present in the original input

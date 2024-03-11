@@ -6,24 +6,22 @@ import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import eu.solven.hutter_prize.reversible.extract_language.UrlPreprocessor;
+import eu.solven.hutter_prize.reversible.extract_language.UrlAliasPreprocessor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TestUrlPreprocessor {
-	final UrlPreprocessor preProcessor = new UrlPreprocessor();
+	final UrlAliasPreprocessor preProcessor = new UrlAliasPreprocessor();
 
 	@Test
 	public void testGoogol() throws IOException {
 		String page = PepperResourceHelper.loadAsString("/pages/googol");
-		Assertions.assertThat(page).doesNotContain("math0").contains("http://www.googol.com/");
+		Assertions.assertThat(page).doesNotContain("math0").contains("http://");
 
 		Map<String, ?> compressed = (Map<String, ?>) preProcessor.compress(Map.of("body", page));
 
 		Assertions.assertThat(compressed).containsKeys("body", "urls");
 
-		Assertions.assertThat(compressed.get("body").toString())
-				.contains("url5")
-				.doesNotContain("http://www.googol.com/");
+		Assertions.assertThat(compressed.get("body").toString()).contains("URL5_").doesNotContain("http://www");
 
 		Assertions.assertThat(compressed.get("urls").toString()).contains("www.googol.com/");
 

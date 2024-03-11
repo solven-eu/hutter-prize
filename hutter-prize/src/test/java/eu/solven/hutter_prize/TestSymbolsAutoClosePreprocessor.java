@@ -350,6 +350,22 @@ public class TestSymbolsAutoClosePreprocessor {
 	}
 
 	@Test
+	public void testAAA() throws IOException {
+		String page =
+				"(or ''Ars Poetica'')\n\n==== A work outside the ''Corpus Aristotelicum'' ====\n* The [[Constitution of the Athenians]]";
+		String compressed = (String) preprocessor.compress(page);
+
+		Assertions.assertThat(compressed)
+				.isEqualTo(
+						"(or ''Ars Poetica'')\n\n==== A work outside the ''Corpus Aristotelicum ====\n* The [[Constitution of the Athenians");
+
+		{
+			String decompressed = preprocessor.decompress(compressed).toString();
+			Assertions.assertThat(decompressed).isEqualTo(page);
+		}
+	}
+
+	@Test
 	public void testNotClosed() throws IOException {
 		String page = "For the Internet company, see [[Google Company. [[Youpi]]";
 		String compressed = (String) preprocessor.compress(page);

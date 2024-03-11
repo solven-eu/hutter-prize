@@ -6,11 +6,11 @@ import java.util.Map;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import eu.solven.hutter_prize.reversible.extract_language.TableMarkdownPreprocessor;
+import eu.solven.hutter_prize.reversible.extract_language.TableMarkdownAliasPreprocessor;
 import eu.solven.pepper.resource.PepperResourceHelper;
 
 public class TestTablePreprocessor {
-	final IReversibleCompressor preProcessor = new TableMarkdownPreprocessor();
+	final IReversibleCompressor preProcessor = new TableMarkdownAliasPreprocessor();
 
 	@Test
 	public void testA() throws IOException {

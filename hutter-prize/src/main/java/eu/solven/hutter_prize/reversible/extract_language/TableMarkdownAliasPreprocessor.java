@@ -7,9 +7,9 @@ package eu.solven.hutter_prize.reversible.extract_language;
  * @author Benoit Lacelle
  *
  */
-public class TableMarkdownPreprocessor extends PatternExtractorPreprocessor {
+public class TableMarkdownAliasPreprocessor extends PatternExtractorPreprocessor {
 
-	public TableMarkdownPreprocessor() {
+	public TableMarkdownAliasPreprocessor() {
 		super("TMD\\d+_", "\\{\\|", "\n\\|\\}", "tables_markdown");
 	}
 

@@ -3,10 +3,14 @@ package eu.solven.hutter_prize;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.ImmutableList;
+
+import eu.solven.hutter_prize.kanzi_only.KanziCompressor;
 import eu.solven.hutter_prize.reversible.Phd9Preprocessor;
 import eu.solven.hutter_prize.reversible.SentenceStartsWithUCPreprocessor;
 import eu.solven.hutter_prize.reversible.SymbolsAutoClose;
@@ -17,8 +21,9 @@ import eu.solven.hutter_prize.reversible.extract_language.ImageLowercaseRefPrepr
 import eu.solven.hutter_prize.reversible.extract_language.ImageRefPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.MathPreprocessor;
 import eu.solven.hutter_prize.reversible.extract_language.TableHtmlPreprocessor;
-import eu.solven.hutter_prize.reversible.extract_language.TableMarkdownPreprocessor;
-import eu.solven.hutter_prize.reversible.extract_language.UrlPreprocessor;
+import eu.solven.hutter_prize.reversible.extract_language.TableMarkdownAliasPreprocessor;
+import eu.solven.hutter_prize.reversible.extract_language.UrlAliasPreprocessor;
+import eu.solven.hutter_prize.reversible.serialization.SerializingFSTCompressor;
 import eu.solven.hutter_prize.reversible.utilities.CompositeReversibleCompressor;
 import eu.solven.hutter_prize.reversible.utilities.PersistingInterceptor;
 import eu.solven.hutter_prize.reversible.utilities.ZipToByteArray;
@@ -28,92 +33,77 @@ public class HPCompressAndDecompress {
 
 	private static boolean DEBUG = false;
 
-	static final IReversibleCompressor compressor = new CompositeReversibleCompressor(Arrays.asList(
+	static final List<String> languageWeirdAlphabet = Arrays.asList("ko",
+			"ja",
+			"zh",
+			"zh-min-nan",
+			"ar",
+			"ru",
+			"uk",
+			"el",
+			"bg",
+			"bn",
+			"he",
+			"os",
+			"fa",
+			"hi",
+			"th",
+			"mk",
+			"ka",
+			"sa",
+			"yi",
+			"ta",
+			"gu",
+			"sr",
+			"vi",
+			"tr",
+			"be");
 
-			// new ZipToByteArray(),
-			new HeaderArticlesFooter(),
+	static final List<IReversibleCompressor> compressors = ImmutableList.<IReversibleCompressor>builder()
+			.add(
 
-			// `MathPreprocessor` discards mathematical formulas, freeing a lot of small words
-			new MathPreprocessor(),
-			new UrlPreprocessor(),
-			new ImageRefPreprocessor(),
-			new ImageLowercaseRefPreprocessor(),
+					// new ZipToByteArray(),
+					new HeaderArticlesFooter(),
 
-			new TableMarkdownPreprocessor(),
-			new TableHtmlPreprocessor(),
+					// `MathPreprocessor` discards mathematical formulas, freeing a lot of small words
+					new MathPreprocessor(),
+					new UrlAliasPreprocessor(),
+					new ImageRefPreprocessor(),
+					new ImageLowercaseRefPreprocessor(),
 
-			new AlphabetSomePreprocessor("ko"),
-			new AlphabetSomePreprocessor("ja"),
-			new AlphabetSomePreprocessor("zh"),
-			new AlphabetSomePreprocessor("zh-min-nan"),
-			new AlphabetSomePreprocessor("ar"),
-			new AlphabetSomePreprocessor("ru"),
-			new AlphabetSomePreprocessor("uk"),
-			new AlphabetSomePreprocessor("el"),
-			new AlphabetSomePreprocessor("bg"),
-			new AlphabetSomePreprocessor("bn"),
-			new AlphabetSomePreprocessor("he"),
-			new AlphabetSomePreprocessor("os"),
-			new AlphabetSomePreprocessor("fa"),
-			new AlphabetSomePreprocessor("hi"),
-			new AlphabetSomePreprocessor("th"),
-			new AlphabetSomePreprocessor("mk"),
-			new AlphabetSomePreprocessor("ka"),
-			new AlphabetSomePreprocessor("sa"),
-			new AlphabetSomePreprocessor("yi"),
-			new AlphabetSomePreprocessor("ta"),
-			new AlphabetSomePreprocessor("gu"),
-			new AlphabetSomePreprocessor("sr"),
-			new AlphabetSomePreprocessor("vi"),
-			new AlphabetSomePreprocessor("tr"),
-			new AlphabetSomePreprocessor("be"),
+					new TableMarkdownAliasPreprocessor(),
+					new TableHtmlPreprocessor())
+			.add(languageWeirdAlphabet.stream()
+					.map(l -> new AlphabetSomePreprocessor(l))
+					.toArray(AlphabetSomePreprocessor[]::new)
 
-			// We replace many individual `AlphabetSomePreprocessor` by a single AlphabetManyPreprocessor. It is faster
-			// (as single pass) and it impacts the text vector just the same. The output file is different as it would
+			// We replace many individual `AlphabetSomePreprocessor` by a single AlphabetManyPreprocessor. It is
+			// faster
+			// (as single pass) and it impacts the text vector just the same. The output file is different as it
+			// would
 			// mix all languages: it is acceptable as long as we do not compress the otherAlphabet file.
-			// new AlphabetManyPreprocessor("ko",
-			// "ja",
-			// "zh",
-			// "zh-min-nan",
-			// "ar",
-			// "ru",
-			// "uk",
-			// "el",
-			// "bg",
-			// "bn",
-			// "he",
-			// "os",
-			// "fa",
-			// "hi",
-			// "th",
-			// "mk",
-			// "ka",
-			// "sa",
-			// "yi",
-			// "ta",
-			// "gu",
-			// "sr",
-			// "vi",
-			// "tr",
-			// "be"),
+			// new AlphabetManyPreprocessor(languageWeirdAlphabet),
+			)
+			.add(
+					// After alphabets as they rely on the `[[al:Youpi]]` syntax
+					// new SkipClosingBrackets(),
 
-			// After alphabets as they rely on the `[[al:Youpi]]` syntax
-			// new SkipClosingBrackets(),
+					// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
+					new XmlToColumnarPreprocessor(),
 
-			// `ColumnRepresentation` turn the file into columns, grouping text, ids, authors, etc
-			new XmlToColumnarPreprocessor(),
+					// Phd9 may be commented as it makes files less human-readable, which is painful during development
+					// phase
+					// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
+					// We prefer Phd9Preprocessor to be applied only on the text column
+					// new CountMinSketchPreprocessor(),
+					// new PrePhd9Preprocessor(),
+					new Phd9Preprocessor(),
+					// new Phd9AdvancedPreprocessor(),
 
-			// Phd9 may be commented as it makes files less human-readable, which is painful during development phase
-			// `Phd9Preprocessor` clean the input, for instance encoding HTML like `&amp;`
-			// We prefer Phd9Preprocessor to be applied only on the text column
-			// new CountMinSketchPreprocessor(),
-			// new PrePhd9Preprocessor(),
-			new Phd9Preprocessor(),
-			// new Phd9AdvancedPreprocessor(),
-
-			// This will turn `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
-			new SentenceStartsWithUCPreprocessor(),
-			new SymbolsAutoClose(),
+					// Turns `My name is Benoit` into `my name is Benoit`, facilitating word-autocompletion
+					new SentenceStartsWithUCPreprocessor(),
+					// Turns `[[Title]]\n` into `[[Title\n`
+					new SymbolsAutoClose()
 
 			// new CharactersBlockAnalysisPreprocessor(),
 
@@ -137,16 +127,21 @@ public class HPCompressAndDecompress {
 			// new CompressColumns(),
 
 			// We do not apply `PackCharactersPreprocessor` after `ColumnRepresentation`
-			// Else common words like `the` would be encoded differently, preventing further compression mechanisms
+			// Else common words like `the` would be encoded differently, preventing further compression
+			// mechanisms
 			// new PackCharactersPreprocessor(),
+			)
+			.add(
 
-			// new SerializingFSTCompressor(false),
-			// kanzi.app.BlockCompressor.getTransformAndCodec(int)
-			// new KanziCompressor(9, false),
-
-			new PersistingInterceptor()
-
-	), DEBUG);
+					// Persist raw files (human-friendly)
+					new PersistingInterceptor())
+			.add(new SerializingFSTCompressor(false),
+					// kanzi.app.BlockCompressor.getTransformAndCodec(int)
+					new KanziCompressor(9, false),
+					// Persist after Kanzi compression
+					new PersistingInterceptor())
+			.build();
+	static final IReversibleCompressor compressor = new CompositeReversibleCompressor(compressors, DEBUG);
 
 	public static void main(String[] args) throws IOException {
 		IReversibleCompressor compressors = HPCompressAndDecompress.compressor;

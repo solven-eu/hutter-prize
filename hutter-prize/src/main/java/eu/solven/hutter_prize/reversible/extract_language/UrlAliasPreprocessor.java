@@ -6,11 +6,11 @@ package eu.solven.hutter_prize.reversible.extract_language;
  * @author Benoit Lacelle
  *
  */
-public class UrlPreprocessor extends PatternExtractorPreprocessor {
+public class UrlAliasPreprocessor extends PatternExtractorPreprocessor {
 
 	private static final String PATTERN_CLOSING = "[\\] ]";
 
-	public UrlPreprocessor() {
+	public UrlAliasPreprocessor() {
 		super(
 				// We handle a subset of potential scheme
 				"URL\\d+_",
